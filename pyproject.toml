@@ -6,7 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "django-nuxt"
 version = "0.1"
 dependencies = [
-    "django>=5.2.4",
+    "django>=5.2.0",
+    "requests>=2.0",
 ]
 description = "A Django app to integrate Nuxt with Django."
 readme = "README.md"

@@ -25,3 +25,10 @@ def NuxtStaticUrls():
             'document_root': 'staticfiles/_nuxt',
         }),
     ]
+
+def NuxtCatchAllUrls():
+    from django_nuxt import views
+
+    return [
+        re_path(r'^(?!\.).*$', views.nuxt_proxy, name='nuxt_catch_all'),
+    ]

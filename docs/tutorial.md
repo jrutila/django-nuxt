@@ -103,3 +103,60 @@ You should have a project structure like this:
 ```
 
 Try it out with `npm run dev`. You should see the Nuxt welcome page.
+
+
+## Let's integrate the basics
+
+### urls.py
+
+In the `simple/urls.py` file, add the following:
+	
+```python
+from django.contrib import admin
+from django.urls import path, include
+from django_nuxt.urls import NuxtStaticUrls
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+] + NuxtStaticUrls()
+```
+
+This will take care of the Nuxt static files (beginning with `_nuxt/`) in django DEBUG mode _and_ in production.
+
+You can test that the proxy works. Load the Nuxt welcome page in the browser (usually `http://localhost:3000`) and look for any `_nuxt/` requests.
+
+For example, I had this in the network tab: `http://localhost:3000/_nuxt/@fs/path/django-nuxt/example/simple/ui/node_modules/nuxt/dist/app/components/welcome.vue?vue&type=style&index=0&scoped=8ffa6876&lang.css`
+
+Now, copy the URL and change the port to Django port (usually `8000`). You should see the same file loaded correctly. (It does a redirect.)
+
+### Nuxt proxy view
+
+`django-nuxt` provides a view that can be used to proxy Nuxt requests to Django.
+
+In the `simple/urls.py` file, add the following:
+
+```python
+from django.contrib import admin
+from django.urls import path
+from django_nuxt.urls import NuxtStaticUrls, NuxtCatchAllUrls
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+] + NuxtStaticUrls() + NuxtCatchAllUrls()
+```
+
+If you now try to open the Django page `http://localhost:8000/` you should see `TemplateDoesNotExist at /_nuxt` error. This means the `NuxtCatchAllUrls` is working.
+
+What we still need to add is the template backend for the Nuxt pages.
+
+In the `simple/settings.py` file, add the following:
+
+```python
+TEMPLATES = [
+    {
+        'BACKEND': 'django_nuxt.backends.NuxtDjangoTemplateBackend',
+    },
+]
+```
+
+If you now navigate to the _Django_ page `http://localhost:8000/` you should see the _Nuxt_ welcome page. Magic!

@@ -65,6 +65,9 @@ TEMPLATES = [
             ],
         },
     },
+    {
+        'BACKEND': 'django_nuxt.backends.NuxtDjangoTemplateBackend',
+    },
 ]
 
 WSGI_APPLICATION = 'simple.wsgi.application'
