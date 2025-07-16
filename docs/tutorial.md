@@ -104,6 +104,7 @@ You should have a project structure like this:
 
 Try it out with `npm run dev`. You should see the Nuxt welcome page.
 
+NOTE! Update the `ui/nuxt.config.ts` file to have `ssr: false`. `django-nuxt` does not support SSR, at the moment.
 
 ## Let's integrate the basics
 
@@ -160,3 +161,30 @@ TEMPLATES = [
 ```
 
 If you now navigate to the _Django_ page `http://localhost:8000/` you should see the _Nuxt_ welcome page. Magic!
+
+## Show some Django data in the Nuxt page
+
+By default, `django-nuxt` will pass the following data to the Nuxt page:
+
+- `user` - The current user
+- `perms` - The current user's permissions
+- `NUXT_DJANGO_BASE_URL` - The base URL of the Django app
+
+Change the `ui/app/app.vue` file to show the user data. `django-nuxt` will inject it's data to the `window.django_nuxt` object.
+
+```vue
+<template>
+  <div>
+    <NuxtRouteAnnouncer />
+    <div>
+      Hello {{ user.username }}
+    </div>
+  </div>
+</template>
+
+<script setup>
+const user = ref(window.django_nuxt.user)
+</script>
+```
+
+You should see the user's username in the page. Login through the admin panel if you are not logged in.
