@@ -254,3 +254,26 @@ Nuxt can now just fetch the data from the API and show it in the page.
 
   const { data: todos } = useFetch('/api/todos/')
 ```
+
+## Collecting static files for production use
+
+When you are ready to deploy your project, you need to collect the static files.
+
+Add the following to the `simple/settings.py` file:
+
+```python
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'django_nuxt.staticfiles.NuxtStaticFilesFinder',
+]
+STATIC_ROOT = 'staticfiles'
+```
+
+Run the following command to collect all the `_nuxt` static files:
+
+```bash
+python manage.py collectstatic
+```
+
+This will copy the static files to the `staticfiles` directory. You should find the `_nuxt` folder in the `staticfiles` directory.

@@ -10,7 +10,7 @@ from django.utils.module_loading import import_string
 
 nuxt_template_name = getattr(settings, 'DJANGO_NUXT_TEMPLATE_NAME', '_nuxt')
 nuxt_server_running = getattr(settings, 'DJANGO_NUXT_SERVER_RUNNING', None)
-nuxt_generated_folder = getattr(settings, 'DJANGO_NUXT_GENERATED_FOLDER', 'ui/dist/')
+nuxt_generated_folder = getattr(settings, 'DJANGO_NUXT_GENERATED_FOLDER', 'ui/.output/public/')
 django_nuxt_data_processors = getattr(settings, 'DJANGO_NUXT_DATA_PROCESSORS', [])
 nuxt_django_prefix = getattr(settings, 'DJANGO_NUXT_PREFIX', 'NUXT_DJANGO_')
 

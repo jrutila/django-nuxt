@@ -22,7 +22,7 @@ def NuxtStaticUrls():
 
     return [
         re_path(r'^_nuxt/(?P<path>.*)$', serve, kwargs={
-            'document_root': 'staticfiles/_nuxt',
+            'document_root': f'{settings.STATIC_ROOT}/_nuxt',
         }),
     ]
 
