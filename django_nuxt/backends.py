@@ -67,7 +67,7 @@ class Template:
         except TemplateDoesNotExist as exc:
             reraise(exc, self.backend)
 
-        rotate_token(request)
+        # rotate_token(request)
 
         if user.is_authenticated:
             perms = list(user.get_all_permissions())
