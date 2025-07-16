@@ -15,10 +15,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path, include
 from django_nuxt.urls import NuxtStaticUrls, NuxtCatchAllUrls
-from django_nuxt import views
+from simple_app.router import router
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include(router.urls)),
 ] + NuxtStaticUrls() + NuxtCatchAllUrls()

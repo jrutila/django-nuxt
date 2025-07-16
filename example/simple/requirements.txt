@@ -16,6 +16,9 @@ django==5.2.4
     # via
     #   -r requirements.in
     #   django-nuxt
+    #   djangorestframework
+djangorestframework==3.16.0
+    # via -r requirements.in
 idna==3.10
     # via requests
 requests==2.32.4

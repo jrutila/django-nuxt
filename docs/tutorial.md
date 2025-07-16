@@ -68,13 +68,13 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-# See the app in the admin panel
+### See the app in the admin panel
 
 ```bash	
 python manage.py createsuperuser
 ```
 
-# Add the app to the admin panel
+### Add the app to the admin panel
 
 ```python
 from django.contrib import admin
@@ -188,3 +188,69 @@ const user = ref(window.django_nuxt.user)
 ```
 
 You should see the user's username in the page. Login through the admin panel if you are not logged in.
+
+## Integrate the Todo models
+
+As Nuxt is a SPA, we need to fetch the data from the Django backend. We use Django REST Framework to create the API.
+
+Enable the REST framework in the `simple/settings.py` file.
+
+```python
+INSTALLED_APPS = [
+    ...
+    'rest_framework',
+    ...
+]
+```
+
+In the `simple_app/router.py` file, create a router for the Todo model. You should separate the classes to their own files, or as you see fit.
+
+```python
+from rest_framework import routers, serializers, viewsets
+from .models import Todo
+
+class TodoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Todo
+        fields = '__all__'
+
+class TodoViewSet(viewsets.ModelViewSet):
+    queryset = Todo.objects.all()
+    serializer_class = TodoSerializer
+
+router = routers.DefaultRouter()
+router.register(r'todos', TodoViewSet)
+
+urlpatterns = router.urls
+```
+
+Now, you can add the router to the `simple/urls.py` file.
+
+```python
+from django.contrib import admin
+from django.urls import path, include
+from .router import router
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/', include(router.urls)),
+] + NuxtStaticUrls() + NuxtCatchAllUrls()
+```
+
+You can now test the API. Open the browser and navigate to `http://localhost:8000/api/todos/`. You should see the list of todos.
+
+Test that you can create a new todo through the DRF API user interface.
+
+## Rendering the todo list in the Nuxt page
+
+Nuxt can now just fetch the data from the API and show it in the page.
+
+```vue
+  <div>
+    <ul>
+      <li v-for="todo in todos" :key="todo.id">{{ todo.title }}</li>
+    </ul>
+  </div>
+
+  const { data: todos } = useFetch('/api/todos/')
+```
