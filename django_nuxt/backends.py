@@ -79,7 +79,7 @@ class Template:
         extra_data = {}
         for processor in django_nuxt_data_processors:
             func = import_string(processor)
-            data = func(request)
+            data = func(context, request)
             if data:
                 json_data = {}
                 for key, value in data.items():
