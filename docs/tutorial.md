@@ -86,3 +86,20 @@ admin.site.register(Todo)
 You should now to login to the admin panel with the credentials you created and see the Todo model in the admin panel.
 
 So far, we have done pretty much basic Django setup.
+
+## Setup Nuxt
+
+```bash
+npm create nuxt ui
+```
+
+You should have a project structure like this:
+
+```
+- manage.py
+- simple/settings.py
+- ui/app/app.vue
+- ui/nuxt.config.ts
+```
+
+Try it out with `npm run dev`. You should see the Nuxt welcome page.
