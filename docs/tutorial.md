@@ -1,6 +1,6 @@
 # Tutorial
 
-Making the project that is present in the `example/simple` folder.
+Making the project that is present in the `example/basic` folder.
 
 ## Setup
 
@@ -18,20 +18,20 @@ pip install -r requirements.txt
 # Activate the virtual environment
 source venv/bin/activate
 
-mkdir simple
-django-admin startproject simple simple
+mkdir basic
+django-admin startproject basic basic
 ```
 
 You should have a project structure like this:
 
 ```
 - manage.py
-- simple/settings.py
-- simple/urls.py
-- simple/wsgi.py
-- simple/asgi.py
-- simple/static
-- simple/templates
+- basic/settings.py
+- basic/urls.py
+- basic/wsgi.py
+- basic/asgi.py
+- basic/static
+- basic/templates
 
 
 You can now run the project with `python manage.py runserver`. You should see the default Django welcome page.
@@ -39,15 +39,15 @@ You can now run the project with `python manage.py runserver`. You should see th
 ## Add a new app
 
 ```bash
-python manage.py startapp simple_app
+python manage.py startapp todo_app
 ```
 
-Add the app to the `INSTALLED_APPS` in the `simple/settings.py` file.
+Add the app to the `INSTALLED_APPS` in the `basic/settings.py` file.
 
 ```python
 INSTALLED_APPS = [
     ...
-    'simple_app',
+    'todo_app',
     ...
 ]
 ```
@@ -97,7 +97,7 @@ You should have a project structure like this:
 
 ```
 - manage.py
-- simple/settings.py
+- basic/settings.py
 - ui/app/app.vue
 - ui/nuxt.config.ts
 ```
@@ -110,7 +110,7 @@ NOTE! Update the `ui/nuxt.config.ts` file to have `ssr: false`. `django-nuxt` do
 
 ### urls.py
 
-In the `simple/urls.py` file, add the following:
+In the `basic/urls.py` file, add the following:
 	
 ```python
 from django.contrib import admin
@@ -126,7 +126,7 @@ This will take care of the Nuxt static files (beginning with `_nuxt/`) in django
 
 You can test that the proxy works. Load the Nuxt welcome page in the browser (usually `http://localhost:3000`) and look for any `_nuxt/` requests.
 
-For example, I had this in the network tab: `http://localhost:3000/_nuxt/@fs/path/django-nuxt/example/simple/ui/node_modules/nuxt/dist/app/components/welcome.vue?vue&type=style&index=0&scoped=8ffa6876&lang.css`
+For example, I had this in the network tab: `http://localhost:3000/_nuxt/@fs/path/django-nuxt/example/basic/ui/node_modules/nuxt/dist/app/components/welcome.vue?vue&type=style&index=0&scoped=8ffa6876&lang.css`
 
 Now, copy the URL and change the port to Django port (usually `8000`). You should see the same file loaded correctly. (It does a redirect.)
 
@@ -134,7 +134,7 @@ Now, copy the URL and change the port to Django port (usually `8000`). You shoul
 
 `django-nuxt` provides a view that can be used to proxy Nuxt requests to Django.
 
-In the `simple/urls.py` file, add the following:
+In the `basic/urls.py` file, add the following:
 
 ```python
 from django.contrib import admin
@@ -150,7 +150,7 @@ If you now try to open the Django page `http://localhost:8000/` you should see `
 
 What we still need to add is the template backend for the Nuxt pages.
 
-In the `simple/settings.py` file, add the following:
+In the `basic/settings.py` file, add the following:
 
 ```python
 TEMPLATES = [
@@ -193,7 +193,7 @@ You should see the user's username in the page. Login through the admin panel if
 
 As Nuxt is a SPA, we need to fetch the data from the Django backend. We use Django REST Framework to create the API.
 
-Enable the REST framework in the `simple/settings.py` file.
+Enable the REST framework in the `basic/settings.py` file.
 
 ```python
 INSTALLED_APPS = [
@@ -203,7 +203,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-In the `simple_app/router.py` file, create a router for the Todo model. You should separate the classes to their own files, or as you see fit.
+In the `todo_app/router.py` file, create a router for the Todo model. You should separate the classes to their own files, or as you see fit.
 
 ```python
 from rest_framework import routers, serializers, viewsets
@@ -224,7 +224,7 @@ router.register(r'todos', TodoViewSet)
 urlpatterns = router.urls
 ```
 
-Now, you can add the router to the `simple/urls.py` file.
+Now, you can add the router to the `basic/urls.py` file.
 
 ```python
 from django.contrib import admin
@@ -259,7 +259,7 @@ Nuxt can now just fetch the data from the API and show it in the page.
 
 When you are ready to deploy your project, you need to collect the static files.
 
-Add the following to the `simple/settings.py` file:
+Add the following to the `basic/settings.py` file:
 
 ```python
 STATICFILES_FINDERS = [

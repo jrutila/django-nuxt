@@ -1,5 +1,5 @@
 """
-URL configuration for simple project.
+URL configuration for basic project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django_nuxt.urls import NuxtStaticUrls, NuxtCatchAllUrls
-from simple_app.router import router
+from todo_app.router import router
 
 urlpatterns = [
     path('admin/', admin.site.urls),
