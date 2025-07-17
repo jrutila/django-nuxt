@@ -9,4 +9,13 @@ def nuxt_schema_data_processor(context, request):
   context[f'{nuxt_django_prefix}SCHEMA_KEY'] = schema_key
   return {
     schema_key: schema,
+    "_scripts": [f'''
+    <script>
+      for (const schema of Object.values(window.django_nuxt.{schema_key})) {{
+        if (schema['~standard']) {{
+          schema['~standard'].validate = new Function('value', schema['~standard'].validate);
+        }}
+      }}
+    </script>
+''']
   }

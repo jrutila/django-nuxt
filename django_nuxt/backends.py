@@ -79,13 +79,18 @@ class Template:
             "user": user_data,
             "perms": perms,
         }
+        scripts = []
         for processor in django_nuxt_data_processors:
             func = import_string(processor)
             data = func(context, request)
             if data:
                 json_data = {}
                 for key, value in data.items():
-                    json_data[key] = value
+                    if key == "_scripts":
+                        scripts.extend(value)
+                    else:
+                        json_data[key] = value
+
                 dj_data.update(json_data)
 
         try:
@@ -96,6 +101,7 @@ class Template:
         # rotate_token(request)
             
         script_tag = f'<script>window.django_nuxt = {json.dumps(dj_data)}</script>'
+        script_tag += "\n".join(scripts)
         rendered = rendered.replace('</head>', f'{script_tag}\n</head>')
         return rendered
 
