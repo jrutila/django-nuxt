@@ -9,11 +9,25 @@ export const useDjangoSchema = async (model: string): Promise<ReturnType> => {
   const config = useRuntimeConfig()
   const schemaKey = config.public.nuxtDjango?.schemaKey || 'schema'
   const schema = useDjangoNuxt().value[schemaKey]
+  const error = ref(null)
+  const data = ref(null)
   if (!schema) {
-    throw new Error(`Schema key ${schemaKey} not found`)
+    error.value = new Error(`Schema key ${schemaKey} not found`)
+    return {
+      data: data,
+      error: error,
+    }
   }
+  if (!schema[model]) {
+    error.value = new Error(`Model ${model} not found in schema`)
+    return {
+      data: data,
+      error: error,
+    }
+  }
+  data.value = schema[model]
   return {
-    data: schema[model],
-    error: null,
+    data: data,
+    error: error,
   }
 }
