@@ -6,7 +6,12 @@ class TestBackends(TestCase):
   def setUp(self):
     self.driver = DjangoNuxtDriver()
 
-  def test_user_injection(self):
+  def test_logged_in_user_injection(self):
     self.driver.user(username="test")
-    page = self.driver.getNuxtPage()
-    str(page.content) | should.contain("Hello test")
+    django_nuxt = self.driver.getDjangoNuxt()
+    django_nuxt["user"] | should.have.key("username").that.should.be.equal("test")
+    django_nuxt["user"] | should.have.key("is_authenticated").that.should.be.equal(True)
+
+  def test_logged_out_user_injection(self):
+    django_nuxt = self.driver.getDjangoNuxt()
+    django_nuxt["user"] | should.have.key("is_authenticated").that.should.be.equal(False)

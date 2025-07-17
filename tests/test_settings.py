@@ -18,6 +18,8 @@ DATABASES = {
     }
 }
 
+ROOT_URLCONF = "tests.driver"
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',

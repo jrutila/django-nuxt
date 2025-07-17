@@ -71,12 +71,21 @@ class Template:
 
         if user.is_authenticated:
             perms = list(user.get_all_permissions())
-            user_json = f'{{ "id": {user.id}, "username": "{user.username}", "is_authenticated": true }}'
+            user_data = {
+                "id": user.id,
+                "username": user.username,
+                "is_authenticated": True,
+            }
         else:
-            user_json = '{"is_authenticated": false}'
+            user_data = {
+                "is_authenticated": False,
+            }
             perms = []
 
-        extra_data = {}
+        dj_data = {
+            "user": user_data,
+            "perms": perms,
+        }
         for processor in django_nuxt_data_processors:
             func = import_string(processor)
             data = func(context, request)
@@ -84,8 +93,8 @@ class Template:
                 json_data = {}
                 for key, value in data.items():
                     json_data[key] = value
-                extra_data.update(json_data)
-        script_tag = f'<script>window.django_nuxt = {{ "user": {user_json}, "perms": {perms}, {json.dumps(extra_data)[1:-1]} }};</script>'
+                dj_data.update(json_data)
+        script_tag = f'<script>window.django_nuxt = {json.dumps(dj_data)}</script>'
         rendered = rendered.replace('</head>', f'{script_tag}\n</head>')
         return rendered
 

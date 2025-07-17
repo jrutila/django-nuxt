@@ -1,19 +1,34 @@
-from django.test import RequestFactory
+from django.test import RequestFactory, Client
 from django.contrib.auth.models import User
-from django_nuxt.views import nuxt_proxy
+from django_nuxt.urls import NuxtStaticUrls, NuxtCatchAllUrls
+from grappa import should
+import json
+
+urlpatterns = [] + NuxtStaticUrls() + NuxtCatchAllUrls()
 
 class DjangoNuxtDriver:
+  current_user = None
+
   def __init__(self):
     self.factory = RequestFactory()
 
   def user(self, **kwargs):
-    self.user = User.objects.create(**kwargs)
+    self.current_user = User.objects.create(**kwargs)
     return self
 
   def getNuxtPage(self):
-    request = self.factory.get("/")
-    request.user = self.user
-    request.session = {}
-    request.session["_auth_user_id"] = self.user.id
-    response = nuxt_proxy(request)
+    client = Client()
+    if self.current_user:
+      client.force_login(self.current_user)
+    response = client.get("/")
+    str(response.content) | should.contain("Hello test")
     return response
+
+  def getDjangoNuxt(self):
+    client = Client()
+    if self.current_user:
+      client.force_login(self.current_user)
+    response = client.get("/")
+    html = str(response.content)
+    django_nuxt = html.split("window.django_nuxt = ")[1].split("</script>")[0]
+    return json.loads(django_nuxt)
