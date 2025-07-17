@@ -5,8 +5,11 @@
       Hello {{ user.username }}
     </div>
     <div>
+      {{ todoChecks }}
       <ul>
-        <li v-for="todo in todos" :key="todo.id">{{ todo.title }}</li>
+        <li v-for="todo in undoneTodos" :key="todo.id">
+          <UCheckbox v-model="todoChecks[todo.id]" :label="todo.title" />
+        </li>
       </ul>
     </div>
     <div>
@@ -42,6 +45,27 @@ const todoForm = useTemplateRef('todoForm')
 const newTodo = ref(Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
 const fields = Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith("~") && !field.read_only)
 const non_field_errors = ref([])
+
+const undoneTodos = computed(() => todos.value.filter(todo => !todo.done))
+const todoChecks = ref(Object.fromEntries(undoneTodos.value.map(todo => [todo.id, false])))
+
+watch(undoneTodos, () => {
+  todoChecks.value = Object.fromEntries(undoneTodos.value.map(todo => [todo.id, todoChecks.value[todo.id] || false]))
+})
+
+watch(() => todoChecks.value, (newVal, oldVal) => {
+  // Find the changed todo id(s)
+  console.log(newVal, oldVal)
+  const doneIds = Object.entries(newVal).filter(([id, done]) => done).map(([id]) => id)
+  console.log('Changed todo id(s):', doneIds)
+  doneIds.forEach(id => markDone(id))
+}, { deep: true })
+
+function markDone(todoId) {
+  updateDjangoModel('todo', todoId, { done: new Date() }).then(() => {
+    refresh()
+  })
+}
 
 function createTodo(event) {
   non_field_errors.value = []

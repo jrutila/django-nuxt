@@ -6,7 +6,7 @@ export async function createDjangoModel(model: string, data: any, query: Record<
   })
 }
 
-export async function updateDjangoModel(model: string, data: any, id: string, query: Record<string, Ref<any>> = {}) {
+export async function updateDjangoModel(model: string, id: string, data: any, query: Record<string, Ref<any>> = {}) {
   return $fetch<any>(`/api/${model}/${id}/`, {
     method: 'PUT',
     body: data,
