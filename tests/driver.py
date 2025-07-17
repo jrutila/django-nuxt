@@ -13,5 +13,7 @@ class DjangoNuxtDriver:
   def getNuxtPage(self):
     request = self.factory.get("/")
     request.user = self.user
+    request.session = {}
+    request.session["_auth_user_id"] = self.user.id
     response = nuxt_proxy(request)
     return response

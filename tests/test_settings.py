@@ -9,6 +9,8 @@ INSTALLED_APPS = [
     "tests",
 ]
 
+DJANGO_NUXT_GENERATED_FOLDER = "tests/fixtures"
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',

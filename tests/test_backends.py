@@ -9,4 +9,4 @@ class TestBackends(TestCase):
   def test_user_injection(self):
     self.driver.user(username="test")
     page = self.driver.getNuxtPage()
-    page.should.contain("test")
+    str(page.content) | should.contain("Hello test")
