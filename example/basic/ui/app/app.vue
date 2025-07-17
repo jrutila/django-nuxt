@@ -14,7 +14,7 @@
     </div>
 
     <h2>Add another todo</h2>
-    <UForm :state="newTodo" @submit="createTodo">
+    <UForm v-if="$has_perm('todo_app.add_todo')" :state="newTodo" @submit="createTodo">
       <UFormField v-for="[key, field] in fields" :key="key" :name="key" :label="field.label" :type="field.type">
         <UInput v-model="newTodo[key]" :type="field.type" />
       </UFormField>
@@ -22,10 +22,12 @@
         label="Create"
         color="primary"
         variant="solid"
-        :loading="creating"
         type="submit"
       />
     </UForm>
+    <div v-else>
+      You don't have permission to add todos
+    </div>
   </UApp>
 </template>
 

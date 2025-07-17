@@ -21,6 +21,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolver.resolve('./runtime/plugins/django-drf-csrf'))
+    addPlugin(resolver.resolve('./runtime/plugins/django-nuxt'))
     addImportsDir(resolver.resolve('./runtime/composables/'), { prepend: true })
     addImportsDir(resolver.resolve('./runtime/utils/'), { prepend: true })
     nuxt.options.runtimeConfig.public.nuxtDjango = (nuxt.options.runtimeConfig.public.nuxtDjango || {}) as NuxtDjangoRuntimeConfig
