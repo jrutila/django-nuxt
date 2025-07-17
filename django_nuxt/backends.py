@@ -62,13 +62,6 @@ class Template:
 
         user = get_user(request)
 
-        try:
-            rendered = self.template.render(context)
-        except TemplateDoesNotExist as exc:
-            reraise(exc, self.backend)
-
-        # rotate_token(request)
-
         if user.is_authenticated:
             perms = list(user.get_all_permissions())
             user_data = {
@@ -94,6 +87,14 @@ class Template:
                 for key, value in data.items():
                     json_data[key] = value
                 dj_data.update(json_data)
+
+        try:
+            rendered = self.template.render(context)
+        except TemplateDoesNotExist as exc:
+            reraise(exc, self.backend)
+
+        # rotate_token(request)
+            
         script_tag = f'<script>window.django_nuxt = {json.dumps(dj_data)}</script>'
         rendered = rendered.replace('</head>', f'{script_tag}\n</head>')
         return rendered

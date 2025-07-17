@@ -12,11 +12,15 @@
     <div>
       <button @click="refresh">Refresh</button>
     </div>
+    {{ schema }}
   </div>
 </template>
 
 <script setup>
 const user = ref(window.django_nuxt.user)
 
-const { data: todos, refresh } = await useDjangoModel('todos')
+const djangoNuxt = useDjangoNuxt()
+
+const { data: todos, refresh } = await useDjangoModel('todo')
+const { data: schema } = await useDjangoSchema('todo')
 </script>

@@ -37,8 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_nuxt',
     'todo_app',
     'rest_framework',
+]
+
+DJANGO_NUXT_DATA_PROCESSORS = [
+    "django_nuxt.data_processor.nuxt_schema_data_processor",
 ]
 
 MIDDLEWARE = [

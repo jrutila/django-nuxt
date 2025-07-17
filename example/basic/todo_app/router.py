@@ -11,6 +11,6 @@ class TodoViewSet(viewsets.ModelViewSet):
     serializer_class = TodoSerializer
 
 router = routers.DefaultRouter()
-router.register(r'todos', TodoViewSet)
+router.register(r'todo', TodoViewSet)
 
 urlpatterns = router.urls
