@@ -14,7 +14,7 @@
     </div>
 
     <h2>Add another todo</h2>
-    <UForm v-if="$has_perm('todo_app.add_todo')" :state="newTodo" @submit="createTodo">
+    <UForm ref="todoForm" v-if="$has_perm('todo_app.add_todo')" :state="newTodo" @submit="createTodo">
       <UFormField v-for="[key, field] in fields" :key="key" :name="key" :label="field.label" :type="field.type">
         <UInput v-model="newTodo[key]" :type="field.type" />
       </UFormField>
@@ -37,6 +37,7 @@ const user = ref(window.django_nuxt.user)
 const { data: todos, refresh } = await useDjangoModel('todo')
 const { data: schema } = await useDjangoSchema('todo')
 
+const todoForm = useTemplateRef('todoForm')
 const newTodo = ref(Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
 const fields = Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith("~") && !field.read_only)
 
@@ -44,6 +45,9 @@ function createTodo(event) {
   createDjangoModel('todo', event.data).then(() => {
     refresh()
     newTodo.value = Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null]))
+  }).catch(e => {
+    const excess_errors = handDjangoServerErrors(todoForm, schema)(e)
+    console.log(excess_errors)
   })
 }
 </script>
