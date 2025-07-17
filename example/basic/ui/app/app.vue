@@ -10,12 +10,13 @@
       </ul>
     </div>
     <div>
-      <button @click="refresh">Refresh</button>
+      <UButton @click="refresh">Refresh</UButton>
     </div>
-    {{ schema }}
-    <UForm :schema="schema" v-model="newTodo">
-      <UFormField v-for="field in fields" :key="field[0]" :name="field[0]" :label="field[1].label" :type="field[1].type">
-        <UInput v-model="newTodo[field[0]]" />
+
+    <h2>Add another todo</h2>
+    <UForm :state="newTodo" @submit="createTodo">
+      <UFormField v-for="[key, field] in fields" :key="key" :name="key" :label="field.label" :type="field.type">
+        <UInput v-model="newTodo[key]" :type="field.type" />
       </UFormField>
       <UButton
         label="Create"
@@ -34,6 +35,13 @@ const user = ref(window.django_nuxt.user)
 const { data: todos, refresh } = await useDjangoModel('todo')
 const { data: schema } = await useDjangoSchema('todo')
 
-const newTodo = ref({})
+const newTodo = ref(Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
 const fields = Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith("~") && !field.read_only)
+
+function createTodo(event) {
+  createDjangoModel('todo', event.data).then(() => {
+    refresh()
+    newTodo.value = Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null]))
+  })
+}
 </script>
