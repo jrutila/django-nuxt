@@ -18,5 +18,5 @@
 <script setup>
 const user = ref(window.django_nuxt.user)
 
-const { data: todos, refresh } = useFetch('/api/todos/')
+const { data: todos, refresh } = await useDjangoModel('todos')
 </script>
