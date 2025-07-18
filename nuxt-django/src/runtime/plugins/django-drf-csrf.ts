@@ -1,3 +1,5 @@
+import { defineNuxtPlugin } from '#app'
+
 export default defineNuxtPlugin(() => {
   globalThis.$fetch = $fetch.create({
     onRequest({ request, options }) {
