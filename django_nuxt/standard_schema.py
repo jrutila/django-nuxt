@@ -113,7 +113,6 @@ def generate_field_common_validation(field_name: str, field_config: Dict[str, An
     validation_code = []
 
     validators = field_config.get("validators", [])
-    print(field_name, field_config)
     if validators:
         for validator in validators:
             if validator.get("name") == "RegexValidator":

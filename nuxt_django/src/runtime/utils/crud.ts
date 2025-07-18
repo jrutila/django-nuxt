@@ -14,6 +14,14 @@ export async function updateDjangoModel(model: string, id: string, data: any, qu
   })
 }
 
+export async function patchDjangoModel(model: string, id: string, data: any, query: Record<string, Ref<any>> = {}) {
+  return $fetch<any>(`/api/${model}/${id}/`, {
+    method: 'PATCH',
+    body: data,
+    query: query,
+  })
+}
+
 export async function deleteDjangoModel(model: string, id: string, query: Record<string, Ref<any>> = {}) {
   return $fetch<any>(`/api/${model}/${id}/`, {
     method: 'DELETE',

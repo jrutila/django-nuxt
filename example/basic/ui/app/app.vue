@@ -5,7 +5,6 @@
       Hello {{ user.username }}
     </div>
     <div>
-      {{ todoChecks }}
       <ul>
         <li v-for="todo in undoneTodos" :key="todo.id">
           <UCheckbox v-model="todoChecks[todo.id]" :label="todo.title" />
@@ -62,7 +61,7 @@ watch(() => todoChecks.value, (newVal, oldVal) => {
 }, { deep: true })
 
 function markDone(todoId) {
-  updateDjangoModel('todo', todoId, { done: new Date() }).then(() => {
+  patchDjangoModel('todo', todoId, { done: new Date() }).then(() => {
     refresh()
   })
 }

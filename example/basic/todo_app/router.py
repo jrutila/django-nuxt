@@ -6,6 +6,11 @@ class TodoSerializer(serializers.ModelSerializer):
         model = Todo
         fields = '__all__'
 
+    def validate_title(self, value):
+        if value == "td: jep":
+            raise serializers.ValidationError("Don't create todo named 'jep'")
+        return value
+
     def validate(self, attrs):
         if attrs.get("title") and attrs.get("title").startswith("td: todo"):
             raise serializers.ValidationError("Don't create todo named 'todo'")
