@@ -1,4 +1,4 @@
-import { defineNuxtPlugin } from '#app'
+import { defineNuxtPlugin, useRuntimeConfig } from '#app'
 
 export default defineNuxtPlugin(() => {
   globalThis.$fetch = $fetch.create({
