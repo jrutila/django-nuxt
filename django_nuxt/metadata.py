@@ -13,6 +13,8 @@ class NuxtSchemaMetadata(SimpleMetadata):
     return info
 
   def determine_metadata(self, request, view):
+    if not hasattr(view, 'get_serializer'):
+      return None
     serializer = view.get_serializer()
     metadata = self.get_serializer_info(serializer)
     

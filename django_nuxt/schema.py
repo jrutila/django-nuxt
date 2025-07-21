@@ -23,6 +23,8 @@ class NuxtSchemaGenerator(BaseSchemaGenerator):
     generals = {}
     for model, view in models.items():
       metadata = self._convert_to_nuxt_metadata(view)
+      if not metadata:
+        continue
       metadata["~metadata"]["model"] = model
       generals[model] = metadata
     return generals
