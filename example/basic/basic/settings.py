@@ -136,3 +136,7 @@ STATIC_ROOT = 'staticfiles'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_METADATA_CLASS': 'todo_app.metadata.TodoMetadata',
+}

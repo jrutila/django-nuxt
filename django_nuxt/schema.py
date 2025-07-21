@@ -1,5 +1,6 @@
 from rest_framework.schemas.generators import BaseSchemaGenerator
-from django_nuxt.metadata import NuxtSchemaMetadata
+from django.conf import settings
+from django.utils.module_loading import import_string
 
 class NuxtSchemaGenerator(BaseSchemaGenerator):
   def get_schema(self, request=None, public=False):
@@ -30,5 +31,10 @@ class NuxtSchemaGenerator(BaseSchemaGenerator):
     return generals
 
   def _convert_to_nuxt_metadata(self, view):
-    md = NuxtSchemaMetadata()
+    default_metadata = getattr(settings, 'DJANGO_NUXT_DEFAULT_METADATA_CLASS', None)
+    if not default_metadata:
+      default_metadata = getattr(settings, 'REST_FRAMEWORK', {}).get('DEFAULT_METADATA_CLASS', None)
+    if not default_metadata:
+      default_metadata = 'django_nuxt.metadata.NuxtSchemaMetadata'
+    md = import_string(default_metadata)()
     return md.determine_metadata(None, view[2])
