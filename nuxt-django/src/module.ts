@@ -34,7 +34,7 @@ export default defineNuxtModule<ModuleOptions>({
         as: 'useDjangoSchema',
       },
       {
-        from: resolver.resolve('./runtime/composables/useDjangoSchema'),
+        from: resolver.resolve('./runtime/composables/useDjangoModel'),
         name: 'useDjangoModel',
         as: 'useDjangoModel',
       },
