@@ -22,7 +22,6 @@ export default defineNuxtModule<ModuleOptions>({
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolver.resolve('./runtime/plugins/django-drf-csrf'))
     addPlugin(resolver.resolve('./runtime/plugins/django-nuxt'))
-    addImportsDir(resolver.resolve('./runtime/composables/'))
     addImports([
       {
         from: resolver.resolve('./runtime/composables/useDjangoNuxt'),
@@ -33,6 +32,11 @@ export default defineNuxtModule<ModuleOptions>({
         from: resolver.resolve('./runtime/composables/useDjangoSchema'),
         name: 'useDjangoSchema',
         as: 'useDjangoSchema',
+      },
+      {
+        from: resolver.resolve('./runtime/composables/useDjangoSchema'),
+        name: 'useDjangoModel',
+        as: 'useDjangoModel',
       },
     ])
     addImportsDir(resolver.resolve('./runtime/utils/'), { prepend: true })
