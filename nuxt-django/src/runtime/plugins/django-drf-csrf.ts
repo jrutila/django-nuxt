@@ -1,11 +1,13 @@
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
 
 export default defineNuxtPlugin(() => {
+  console.log('django-drf-csrf plugin')
   globalThis.$fetch = $fetch.create({
     onRequest({ request, options }) {
       const config = useRuntimeConfig()
       const apiPath = config.public.nuxtDjango?.apiPath || '/api/'
-      
+      console.log('onRequest', apiPath, request)
+
       if (!request.startsWith(apiPath)) {
         return
       }
