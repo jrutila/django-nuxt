@@ -2,7 +2,7 @@ import type { Ref } from "vue"
 import { computed, ref } from "vue"
 import { useFetch } from "nuxt/app"
 import type { FetchError, FetchOptions } from 'ofetch'
-import type { AsyncData, AsyncDataOptions, KeysOf, MultiWatchSources, PickFrom } from "nuxt/app"
+import type { AsyncData, AsyncDataOptions, UseFetchOptions } from "nuxt/app"
 
 type Pagination = {
   pageIndex: number
@@ -12,7 +12,7 @@ type Pagination = {
 
 type ReturnType = AsyncData<any[], FetchError> & { pagination: Ref<Pagination | undefined> }
 
-export const useDjangoModel = async (model: string, query: Record<string, Ref<any>> = {}): Promise<ReturnType> => {
+export const useDjangoModel = async (model: string, query: Record<string, Ref<any>> = {}, options: UseFetchOptions<any> = {}): Promise<ReturnType> => {
   const pagination = ref(undefined)
   const q = computed(() => {
     const b: Record<string, any> = {}
@@ -49,6 +49,7 @@ export const useDjangoModel = async (model: string, query: Record<string, Ref<an
         return data.results
       }
       return data
-    }
+    },
+    ...options,
   })), pagination }
 }
