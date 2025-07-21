@@ -1,5 +1,6 @@
 import type { FetchError } from "ofetch"
 import { useRuntimeConfig } from "#app"
+import { ref } from "vue"
 import { useDjangoNuxt } from "./useDjangoNuxt"
 import type { AsyncData } from "nuxt/app"
 
