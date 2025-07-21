@@ -1,4 +1,4 @@
-import { defineNuxtModule, addPlugin, createResolver, addImportsDir } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImportsDir, addImports } from '@nuxt/kit'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
@@ -22,7 +22,19 @@ export default defineNuxtModule<ModuleOptions>({
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolver.resolve('./runtime/plugins/django-drf-csrf'))
     addPlugin(resolver.resolve('./runtime/plugins/django-nuxt'))
-    addImportsDir(resolver.resolve('./runtime/composables/'), { prepend: true })
+    addImportsDir(resolver.resolve('./runtime/composables/'))
+    addImports([
+      {
+        from: resolver.resolve('./runtime/composables/useDjangoNuxt'),
+        name: 'useDjangoNuxt',
+        as: 'useDjangoNuxt',
+      },
+      {
+        from: resolver.resolve('./runtime/composables/useDjangoSchema'),
+        name: 'useDjangoSchema',
+        as: 'useDjangoSchema',
+      },
+    ])
     addImportsDir(resolver.resolve('./runtime/utils/'), { prepend: true })
     nuxt.options.runtimeConfig.public.nuxtDjango = (nuxt.options.runtimeConfig.public.nuxtDjango || {}) as NuxtDjangoRuntimeConfig
     nuxt.options.runtimeConfig.public.nuxtDjango.schemaKey = options.schemaKey || '{{ NUXT_DJANGO_SCHEMA_KEY }}'

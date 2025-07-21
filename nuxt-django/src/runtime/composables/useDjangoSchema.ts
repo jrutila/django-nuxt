@@ -1,4 +1,6 @@
 import type { FetchError } from "ofetch"
+import { useRuntimeConfig } from "#app"
+import { useDjangoNuxt } from "./useDjangoNuxt"
 import type { AsyncData } from "nuxt/app"
 
 type DjangoSchema = Record<string, any>
