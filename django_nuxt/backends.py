@@ -98,8 +98,6 @@ class Template:
         except TemplateDoesNotExist as exc:
             reraise(exc, self.backend)
 
-        # rotate_token(request)
-            
         script_tag = f'<script>window.django_nuxt = {json.dumps(dj_data)}</script>'
         script_tag += "\n".join(scripts)
         rendered = rendered.replace('</head>', f'{script_tag}\n</head>')
