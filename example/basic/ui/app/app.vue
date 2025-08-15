@@ -38,9 +38,14 @@
       <span v-for="todo in who.todos" :key="todo">{{ todo }}</span>
     </div>
     <UForm :schema="whoSchema" :state="newWho" @submit="createWho">
-
+      <UFormField name="name" label="Name" type="text">
+        <UInput v-model="newWho.name" type="text" />
+      </UFormField>
+      <UFormField name="todos" label="Todos" type="many related">
+        <USelectMenu multiple v-model="newWho.todos" :items="whoSchema.todos.choices" class="w-48" />
+      </UFormField>
+      <UButton label="Create" color="primary" variant="solid" type="submit" />
     </UForm>
-    {{ whoSchema }}
   </UApp>
 </template>
 
@@ -54,6 +59,7 @@ const { data: whoSchema } = await useDjangoSchema('who', { only_undone: true })
 
 const todoForm = useTemplateRef('todoForm')
 const newTodo = ref(Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
+const newWho = ref(Object.fromEntries(Object.entries(whoSchema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
 const fields = Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith("~") && !field.read_only)
 const non_field_errors = ref([])
 

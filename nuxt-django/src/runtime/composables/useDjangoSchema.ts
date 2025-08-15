@@ -26,7 +26,14 @@ export const useDjangoSchema = async (model: string, query: Record<string, Ref<a
     data.value = schema[model]
   }
   if (error.value || Object.keys(query).length > 0) {
-    return { ...(await useFetch<any>(`/api/${model}/`, { query: query, method: 'OPTIONS' })) }
+    return { ...(await useFetch<any>(`/api/${model}/`, {
+      query: query,
+      method: 'OPTIONS',
+      transform: (data) => {
+        data['~standard'].validate = new Function('value', data['~standard'].validate)
+        return data
+      }
+    })) }
   }
   return {
     data: data,
