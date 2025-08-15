@@ -8,27 +8,25 @@ type DjangoSchema = Record<string, any>
 
 type ReturnType = AsyncData<DjangoSchema, FetchError>
 
-export const useDjangoSchema = async (model: string): Promise<ReturnType> => {
-  const config = useRuntimeConfig()
-  const schemaKey = config.public.nuxtDjango?.schemaKey || 'schema'
-  const schema = useDjangoNuxt().value[schemaKey]
+export const useDjangoSchema = async (model: string, query: Record<string, Ref<any>> = {}): Promise<ReturnType> => {
   const error = ref(null as FetchError | null)
   const data = ref(null as DjangoSchema | null)
-  if (!schema) {
-    error.value = new Error(`Schema key ${schemaKey} not found`)
-    return {
-      data: data,
-      error: error,
+
+  if (Object.keys(query).length === 0) {
+    const config = useRuntimeConfig()
+    const schemaKey = config.public.nuxtDjango?.schemaKey || 'schema'
+    const schema = useDjangoNuxt().value[schemaKey]
+    if (!schema) {
+      error.value = new Error(`Schema key ${schemaKey} not found`)
     }
-  }
-  if (!schema[model]) {
-    error.value = new Error(`Model ${model} not found in schema`)
-    return {
-      data: data,
-      error: error,
+    if (!schema[model]) {
+      error.value = new Error(`Model ${model} not found in schema`)
     }
+    data.value = schema[model]
   }
-  data.value = schema[model]
+  if (error.value || Object.keys(query).length > 0) {
+    return { ...(await useFetch<any>(`/api/${model}/`, { query: query, method: 'OPTIONS' })) }
+  }
   return {
     data: data,
     error: error,
