@@ -31,6 +31,16 @@
     <div v-else>
       You don't have permission to add todos
     </div>
+
+    <h2>Whos</h2>
+    <div class="flex flex-row gap-2" v-for="who in whos" :key="who.id">
+      <span>{{ who.name }}</span>
+      <span v-for="todo in who.todos" :key="todo">{{ todo }}</span>
+    </div>
+    <UForm :schema="whoSchema" :state="newWho" @submit="createWho">
+
+    </UForm>
+    {{ whoSchema }}
   </UApp>
 </template>
 
@@ -38,7 +48,9 @@
 const user = ref(window.django_nuxt.user)
 
 const { data: todos, refresh } = await useDjangoModel('todo')
+const { data: whos } = await useDjangoModel('who')
 const { data: schema } = await useDjangoSchema('todo')
+const { data: whoSchema } = await useDjangoSchema('who', { only_undone: true })
 
 const todoForm = useTemplateRef('todoForm')
 const newTodo = ref(Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))

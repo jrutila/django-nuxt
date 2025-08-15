@@ -11,3 +11,8 @@ class Todo(models.Model):
     )
   ])
   done = models.DateTimeField(null=True, blank=True)
+
+class Who(models.Model):
+  name = models.CharField(max_length=200)
+
+  todos = models.ManyToManyField(Todo, blank=True, null=True, related_name='whos')
