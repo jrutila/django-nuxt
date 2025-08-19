@@ -1,6 +1,8 @@
-const _modelPathCache = new Map<string, string>()
 import { useNuxtApp, useRuntimeConfig } from "nuxt/app"
 import type { Ref } from "vue"
+import { isRef } from "vue"
+
+const _modelPathCache = new Map<string, string>()
 
 export const useDjangoNuxtModelPath = (model: any | Ref<any>, id: any | Ref<any> | null = null) => {
   if (isRef(model)) {
