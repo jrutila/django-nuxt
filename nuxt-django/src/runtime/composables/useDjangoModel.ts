@@ -1,8 +1,9 @@
 import type { Ref } from "vue"
 import { computed, ref } from "vue"
 import { useFetch } from "nuxt/app"
-import type { FetchError, FetchOptions } from 'ofetch'
-import type { AsyncData, AsyncDataOptions, UseFetchOptions } from "nuxt/app"
+import type { FetchError } from 'ofetch'
+import type { AsyncData, UseFetchOptions } from "nuxt/app"
+import { useDjangoNuxtModelPath } from "./useDjangoNuxtModelPath"
 
 type Pagination = {
   pageIndex: number
@@ -29,7 +30,9 @@ export const useDjangoModel = async (model: string, query: Record<string, Ref<an
     }
     return b
   })
-  return { ...(await useFetch<any[]>(`/api/${model}/${query.id ? query.id.value + "/" : ''}`, {
+
+  const path = useDjangoNuxtModelPath(model, query.id)
+  return { ...(await useFetch<any[]>(path, {
     query: q,
     method: 'GET',
     transform: (data) => {

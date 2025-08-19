@@ -2,6 +2,7 @@ import type { FetchError } from "ofetch"
 import { useRuntimeConfig } from "#app"
 import { ref } from "vue"
 import { useDjangoNuxt } from "./useDjangoNuxt"
+import { useDjangoNuxtModelPath } from "./useDjangoNuxtModelPath"
 import { useFetch } from "nuxt/app"
 import type { AsyncData } from "nuxt/app"
 
@@ -26,7 +27,8 @@ export const useDjangoSchema = async (model: string, query: Record<string, Ref<a
     data.value = schema[model]
   }
   if (error.value || Object.keys(query).length > 0) {
-    return { ...(await useFetch<any>(`/api/${model}/`, {
+    const path = useDjangoNuxtModelPath(model)
+    return { ...(await useFetch<any>(path, {
       query: query,
       method: 'OPTIONS',
       transform: (data) => {

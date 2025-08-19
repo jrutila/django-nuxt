@@ -23,7 +23,7 @@ export default defineNuxtModule<ModuleOptions>({
     addPlugin(resolver.resolve('./runtime/plugins/django-drf-csrf'))
     addPlugin(resolver.resolve('./runtime/plugins/django-nuxt'))
     addImports([
-      'useDjangoNuxt', 'useDjangoSchema', 'useDjangoModel',
+      'useDjangoNuxt', 'useDjangoSchema', 'useDjangoModel', 'useDjangoNuxtModelPath',
     ].map(name => ({
       from: resolver.resolve(`./runtime/composables/${name}`),
       name,
