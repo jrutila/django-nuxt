@@ -46,12 +46,15 @@ class Template:
         self.template = template
 
     def render(self, context=None, request=None):
-        django_nuxt_data_processors = getattr(context, 'DJANGO_NUXT_DATA_PROCESSORS', getattr(settings, 'DJANGO_NUXT_DATA_PROCESSORS', []))
-        nuxt_django_prefix = getattr(settings, 'DJANGO_NUXT_PREFIX', 'NUXT_DJANGO_')
-
         context = make_context(
             context, request, autoescape=True
         )
+
+        django_nuxt_data_processors = context.get("DJANGO_NUXT_DATA_PROCESSORS", None)
+        if django_nuxt_data_processors is None:
+            django_nuxt_data_processors = getattr(settings, 'DJANGO_NUXT_DATA_PROCESSORS', [])
+        nuxt_django_prefix = getattr(settings, 'DJANGO_NUXT_PREFIX', 'NUXT_DJANGO_')
+
         # Add all Django settings beginning with "NUXT_DJANGO_" to the context if they are not already in the context
         for s in dir(settings):
             if s.startswith(nuxt_django_prefix) and s not in context:
