@@ -3,9 +3,9 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 class NuxtSchemaGenerator(BaseSchemaGenerator):
-  def get_schema(self, request=None, public=False):
+  def get_schema(self, context=None, request=None, ignore_request=False):
     self._initialise_endpoints()
-    _, view_endpoints = self._get_paths_and_endpoints(None if public else request)
+    _, view_endpoints = self._get_paths_and_endpoints(request if not ignore_request else None)
     models = {}
     # Find the POST or GET endpoint for each model
     for view in view_endpoints:

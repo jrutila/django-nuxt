@@ -6,8 +6,9 @@ def nuxt_schema_data_processor(context, request):
   schema_generator = getattr(settings, "DJANGO_NUXT_SCHEMA_GENERATOR", 'django_nuxt.schema.NuxtSchemaGenerator')
   nuxt_django_prefix = getattr(settings, 'DJANGO_NUXT_PREFIX', 'NUXT_DJANGO_')
   generator = import_string(schema_generator)()
-  schema = generator.get_schema()
   context[f'{nuxt_django_prefix}SCHEMA_KEY'] = schema_key
+
+  schema = generator.get_schema(context, request, ignore_request=True)
   return {
     schema_key: schema,
     "_scripts": [f'''
