@@ -30,14 +30,16 @@ class NuxtDjangoTemplateBackend(BaseEngine):
             raise TemplateDoesNotExist(template_name)
 
         nuxt_server_running = getattr(settings, 'DJANGO_NUXT_SERVER_RUNNING', None)
-        if settings.DEBUG or nuxt_server_running:
+        if nuxt_server_running != False or (settings.DEBUG and nuxt_server_running is None):
+            if nuxt_server_running is True or nuxt_server_running is None:
+                nuxt_server_running = 'http://localhost:3000'
             import requests
             try:
-                response = requests.get(nuxt_server_running or 'http://localhost:3000')
+                response = requests.get(nuxt_server_running)
                 if response.status_code == 200:
                     return Template(self.engine.from_string(response.text))
             except requests.RequestException:
-              raise Exception(f"Nuxt is not running on {nuxt_server_running or 'localhost:3000'}")
+              raise Exception(f"Nuxt is not running on {nuxt_server_running}")
 
         return Template(self.engine.get_template('200.html'))
 
