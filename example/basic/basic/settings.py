@@ -26,10 +26,7 @@ SECRET_KEY = 'django-insecure-9b-qhl!b%m(=5of^&^i_b_xv+q443p6mqm)9$@iasgrzsu$p$=
 ALLOWED_HOSTS = ['*']
 DEBUG = True
 
-
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,6 +39,8 @@ INSTALLED_APPS = [
     'rest_framework',
 ]
 
+#DJANGO_NUXT_GENERATED_FOLDER = 'ui/.output/public/'
+#DJANGO_NUXT_SERVER_RUNNING = False
 DJANGO_NUXT_DATA_PROCESSORS = [
     "django_nuxt.data_processor.nuxt_schema_data_processor",
 ]
