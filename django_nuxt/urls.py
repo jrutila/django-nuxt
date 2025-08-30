@@ -4,7 +4,8 @@ from django.views.static import serve
 
 def NuxtStaticUrls():
     nuxt_server_running = getattr(settings, 'DJANGO_NUXT_SERVER_RUNNING', None)
-    if nuxt_server_running != False or (settings.DEBUG and nuxt_server_running is None):
+    # Only use the proxy if explicitly set or not explicitly set in DEBUG mode
+    if nuxt_server_running or (settings.DEBUG and nuxt_server_running is None):
         if nuxt_server_running is True or nuxt_server_running is None:
             nuxt_server_running = 'http://localhost:3000'
         from django.views.generic import View
