@@ -26,10 +26,10 @@ jobs:
       - name: build
         run: pnpm prepack
         working-directory: nuxt-django
+      - name: fix npmrc
+        run: echo -e "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\nregistry=https://npm.pkg.github.com\nalways-auth=true" >> nuxt-django/.npmrc
       - name: debug
         run: cat nuxt-django/.npmrc
-      - name: debug
-        run: cat .npmrc
       - name: Release
         run: pnpm publish --publish-branch feature/release
         working-directory: nuxt-django
