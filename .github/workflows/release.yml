@@ -23,8 +23,11 @@ jobs:
       - name: Install deps
         run: pnpm install
         working-directory: nuxt-django
+      - name: build
+        run: pnpm prepack
+        working-directory: nuxt-django
       - name: Release
-        run: pnpm release
+        run: pnpm publish --publish-branch feature/release
         working-directory: nuxt-django
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
