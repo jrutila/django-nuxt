@@ -13,8 +13,8 @@ importers:
         version: 4.0.0(magicast@0.3.5)
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu':
-        specifier: 4.47.0
-        version: 4.47.0
+        specifier: 4.46.2
+        version: 4.46.2
     devDependencies:
       '@nuxt/devtools':
         specifier: ^2.6.2
@@ -1353,8 +1353,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@rollup/rollup-linux-x64-gnu@4.47.0':
-    resolution: {integrity: sha512-ylkLO6G7oUiN28mork3caDmgXHqRuopAxjYDaOqs4CoU9pkfR0R/pGQb2V1x2Zg3tlFj4b/DvxZroxC3xALX6g==}
+  '@rollup/rollup-linux-x64-gnu@4.46.2':
+    resolution: {integrity: sha512-Jj5a9RUoe5ra+MEyERkDKLwTXVu6s3aACP51nkfnK9wJTraCC8IMe3snOfALkrjTYd2G1ViE1hICj0fZ7ALBPA==}
     cpu: [x64]
     os: [linux]
 
@@ -6024,7 +6024,7 @@ snapshots:
   '@rollup/rollup-linux-x64-gnu@4.45.1':
     optional: true
 
-  '@rollup/rollup-linux-x64-gnu@4.47.0':
+  '@rollup/rollup-linux-x64-gnu@4.46.2':
     optional: true
 
   '@rollup/rollup-linux-x64-musl@4.45.1':
