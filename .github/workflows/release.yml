@@ -20,6 +20,9 @@ jobs:
       - uses: pnpm/action-setup@v4
         with:
           version: 10
+      - name: Install deps
+        run: pnpm install
+        working-directory: nuxt-django
       - name: Release
         run: pnpm release
         working-directory: nuxt-django
