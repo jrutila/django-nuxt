@@ -26,3 +26,5 @@ jobs:
       - name: Release
         run: pnpm release
         working-directory: nuxt-django
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
