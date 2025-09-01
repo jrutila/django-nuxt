@@ -1,6 +1,6 @@
 {
   "name": "nuxt-django",
-  "version": "1.0.0",
+  "version": "0.2.12",
   "description": "Nuxt Django",
   "repository": "https://github.com/jrutila/django-nuxt",
   "license": "MIT",
