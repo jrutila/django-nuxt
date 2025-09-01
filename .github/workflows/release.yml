@@ -26,6 +26,8 @@ jobs:
       - name: build
         run: pnpm prepack
         working-directory: nuxt-django
+      - name: debug
+        run: cat nuxt-django/.npmrc
       - name: Release
         run: pnpm publish --publish-branch feature/release
         working-directory: nuxt-django
