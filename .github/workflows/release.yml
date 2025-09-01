@@ -31,7 +31,7 @@ jobs:
       - name: debug
         run: cat nuxt-django/.npmrc
       - name: Release
-        run: pnpm publish --publish-branch feature/release
+        run: pnpm publish --publish-branch feature/release --no-git-checks
         working-directory: nuxt-django
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
