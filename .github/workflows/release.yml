@@ -2,7 +2,7 @@ name: nuxt-django release
 
 on:
   push:
-    branches: ["feature/release"]
+    branches: ["main"]
 
 jobs:
   build:
