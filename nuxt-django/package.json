@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-django",
+  "name": "@jrutila/nuxt-django",
   "version": "0.2.12",
   "description": "Nuxt Django",
   "repository": {

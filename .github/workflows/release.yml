@@ -27,7 +27,7 @@ jobs:
         run: pnpm prepack
         working-directory: nuxt-django
       - name: fix npmrc
-        run: echo -e "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\nregistry=https://npm.pkg.github.com\nalways-auth=true" >> nuxt-django/.npmrc
+        run: echo -e "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}\n@jrutila:registry=https://npm.pkg.github.com\nalways-auth=true" >> nuxt-django/.npmrc
       - name: debug
         run: cat nuxt-django/.npmrc
       - name: Release
