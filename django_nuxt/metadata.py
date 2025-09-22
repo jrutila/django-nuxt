@@ -13,7 +13,8 @@ class NuxtSchemaMetadata(SimpleMetadata):
       info['validators'] = self.map_validators(field.validators)
     if isinstance(field, ManyRelatedField):
       info['type'] = 'many related'
-      info['choices'] = [{'id': x.pk, 'label': str(x)} for x in list(field.child_relation.queryset.all())]
+      # Don't do this like this, will leak data! Apply permissions, at least.
+      #info['choices'] = [{'id': x.pk, 'label': str(x)} for x in list(field.child_relation.queryset.all())]
     return info
 
   def determine_metadata(self, request, view):
