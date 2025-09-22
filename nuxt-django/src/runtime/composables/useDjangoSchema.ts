@@ -20,8 +20,7 @@ export const useDjangoSchema = async (model: string, query: Record<string, Ref<a
     const schema = useDjangoNuxt().value[schemaKey]
     if (!schema) {
       error.value = new Error(`Schema key ${schemaKey} not found`)
-    }
-    if (!schema[model]) {
+    } else if (!schema[model]) {
       error.value = new Error(`Model ${model} not found in schema`)
     }
     data.value = schema[model]
