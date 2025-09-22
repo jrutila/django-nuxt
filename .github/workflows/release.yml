@@ -2,7 +2,7 @@ name: nuxt-django release
 
 on:
   push:
-    branches: ["main"]
+    branches: ["feature/release"]
 
 jobs:
   build:
@@ -23,8 +23,15 @@ jobs:
       - name: Install deps
         run: pnpm install
         working-directory: nuxt-django
+      - name: build
+        run: pnpm prepack
+        working-directory: nuxt-django
+      - name: fix npmrc
+        run: echo -e "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}\n@jrutila:registry=https://npm.pkg.github.com\nalways-auth=true" >> nuxt-django/.npmrc
+      - name: debug
+        run: cat nuxt-django/.npmrc
       - name: Release
-        run: pnpm release
+        run: pnpm publish --publish-branch feature/release --no-git-checks
         working-directory: nuxt-django
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
