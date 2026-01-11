@@ -31,7 +31,7 @@ export const useDjangoModel = async (model: string, query: Record<string, Ref<an
     return b
   })
 
-  const path = useDjangoNuxtModelPath(model, query.id)
+  const path = useDjangoNuxtModelPath(model, query)
   return { ...(await useFetch<any[]>(path, {
     query: q,
     method: 'GET',

@@ -1,4 +1,5 @@
 from rest_framework import routers, serializers, viewsets, filters
+from rest_framework.response import Response
 from .models import Todo, Who
 
 class TodoSerializer(serializers.ModelSerializer):
@@ -32,6 +33,10 @@ class TodoViewSet(viewsets.ModelViewSet):
     serializer_class = TodoSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', ]
+
+    def get_whos(self, request, *args, **kwargs):
+        todo = self.get_object()
+        return Response(WhoSerializer(todo.whos.all(), many=True).data)
 
 class WhoViewSet(viewsets.ModelViewSet):
     queryset = Who.objects.all()

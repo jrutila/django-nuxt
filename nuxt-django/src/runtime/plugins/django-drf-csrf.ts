@@ -1,10 +1,15 @@
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
+import { isRef } from 'vue'
 
 export default defineNuxtPlugin(() => {
   globalThis.$fetch = $fetch.create({
     onRequest({ request, options }) {
       const config = useRuntimeConfig()
       const apiPath = config.public.nuxtDjango?.apiPath || '/api/'
+
+      if (isRef(request)) {
+        request = request.value
+      }
 
       if (!request.startsWith(apiPath)) {
         return

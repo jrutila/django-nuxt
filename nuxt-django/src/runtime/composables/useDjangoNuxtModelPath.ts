@@ -1,30 +1,54 @@
 import { useNuxtApp, useRuntimeConfig } from "nuxt/app"
 import type { Ref } from "vue"
-import { isRef } from "vue"
+import { isRef, computed } from "vue"
 
 const _modelPathCache = new Map<string, string>()
 
-export const useDjangoNuxtModelPath = (model: any | Ref<any>, id: any | Ref<any> | null = null) => {
-  if (isRef(model)) {
-    model = model.value
-  }
-  if (isRef(id)) {
-    id = id.value
-  }
+export const useDjangoNuxtModelPath = (model: any | Ref<any>, idOrQuery: any | Ref<any> | null = null) => {
+  return computed(() => {
+    if (isRef(model)) {
+      model = model.value
+    }
+    if (isRef(idOrQuery)) {
+      idOrQuery = idOrQuery.value
+    }
 
-  const cacheKey = `${model}-${id ? `${id}` : ''}`
-  let path = _modelPathCache.get(cacheKey)
-  if (!path) {
-    const nuxtApp = useNuxtApp()
-    if (nuxtApp['$djangoNuxtModelPath']) {
-      path = nuxtApp['$djangoNuxtModelPath'](model, id)
-    } else {
-      const apiPath = useRuntimeConfig().public.nuxtDjango?.apiPath || '/api/'
-      path = `${apiPath}${model}/${id ? `${id}/` : ''}`
+    let id = null
+    if (idOrQuery) {
+      if (typeof idOrQuery === 'object') {
+        id = idOrQuery.id
+      } else {
+        id = idOrQuery
+      }
     }
-    if (path) {
-      _modelPathCache.set(cacheKey, path)
+
+    function resolveRefsInObject(obj: any) {
+      if (isRef(obj)) {
+        obj = obj.value
+      }
+      if (typeof obj === 'object') {
+        return Object.fromEntries(Object.entries(obj).map(([key, value]) => [key, resolveRefsInObject(value)]))
+      }
+      return obj
     }
-  }
-  return path
+
+    const cacheKey = `${model}-${idOrQuery ? `${JSON.stringify(resolveRefsInObject(idOrQuery))}` : ''}`
+    let path = _modelPathCache.get(cacheKey)
+    if (!path) {
+      const nuxtApp = useNuxtApp()
+      if (nuxtApp['$djangoNuxtModelPath']) {
+        path = nuxtApp['$djangoNuxtModelPath'](model, idOrQuery)
+      } else {
+        let baseUrl = useRuntimeConfig().public.nuxtDjango?.baseUrl || '/'
+        if (nuxtApp['$djangoNuxtModelPathBaseUrl']) {
+          baseUrl = nuxtApp['$djangoNuxtModelPathBaseUrl'](baseUrl, model, idOrQuery)
+        }
+        path = `${baseUrl.replace(/\/$/, '')}/${model}/${id ? `${id}/` : ''}`
+      }
+      if (path) {
+        _modelPathCache.set(cacheKey, path)
+      }
+    }
+    return path
+  })
 }

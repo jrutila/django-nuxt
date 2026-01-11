@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django_nuxt.urls import NuxtStaticUrls, NuxtCatchAllUrls
-from todo_app.router import router
+from todo_app.router import router, TodoViewSet
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path(
+        'api/todo/<int:pk>/whos',
+        TodoViewSet.as_view({"get": "get_whos"})
+    ),
     path('api/', include(router.urls)),
 ] + NuxtStaticUrls() + NuxtCatchAllUrls()

@@ -57,6 +57,7 @@ const { data: whos } = await useDjangoModel('who')
 const { data: schema } = await useDjangoSchema('todo')
 const { data: whoSchema } = await useDjangoSchema('who', { only_undone: true })
 
+
 const todoForm = useTemplateRef('todoForm')
 const newTodo = ref(Object.fromEntries(Object.entries(schema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
 const newWho = ref(Object.fromEntries(Object.entries(whoSchema.value || {}).filter(([key, field]) => !key.startsWith('~') && !field.read_only).map(([key, field]) => [key, field.initial || null])))
@@ -66,8 +67,16 @@ const non_field_errors = ref([])
 const undoneTodos = computed(() => todos.value.filter(todo => !todo.done))
 const todoChecks = ref(Object.fromEntries(undoneTodos.value.map(todo => [todo.id, false])))
 
+const { data: firstWhos, execute: executeFirstWhos } = await useDjangoModel('whos', { pk: computed(() => undoneTodos.value[0]?.id || null) }, { immediate: false })
+if (undoneTodos.value.length > 0) {
+  executeFirstWhos()
+}
 watch(undoneTodos, () => {
   todoChecks.value = Object.fromEntries(undoneTodos.value.map(todo => [todo.id, todoChecks.value[todo.id] || false]))
+  if (undoneTodos.value.length > 0) {
+    console.log('executing first whos')
+    executeFirstWhos()
+  }
 })
 
 watch(() => todoChecks.value, (newVal, oldVal) => {
