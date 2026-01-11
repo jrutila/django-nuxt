@@ -26,7 +26,7 @@ export const useDjangoNuxtModelPath = (model: any | Ref<any>, idOrQuery: any | R
       if (isRef(obj)) {
         obj = obj.value
       }
-      if (typeof obj === 'object') {
+      if (obj && typeof obj === 'object') {
         return Object.fromEntries(Object.entries(obj).map(([key, value]) => [key, resolveRefsInObject(value)]))
       }
       return obj
