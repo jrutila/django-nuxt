@@ -37,6 +37,11 @@ classifiers = [
 [project.urls]
 Homepage = "https://github.com/jrutila/django-nuxt"
 
+[dependency-groups]
+dev = [
+    "grappa",
+]
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["django_nuxt"]
