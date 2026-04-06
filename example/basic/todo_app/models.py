@@ -6,8 +6,8 @@ from django.core.exceptions import ValidationError
 class Todo(models.Model):
   title = models.CharField(max_length=200, validators=[
     RegexValidator(
-        regex=r'^td: ',
-        message='Title must start with "td: "'
+        regex=fr'^td: \d{2}',
+        message='Title must start with "td: <two-digit-number>"'
     )
   ])
   done = models.DateTimeField(null=True, blank=True)

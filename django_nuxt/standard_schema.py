@@ -117,7 +117,7 @@ def generate_field_common_validation(field_name: str, field_config: Dict[str, An
         for validator in validators:
             if validator.get("name") == "RegexValidator":
                 validation_code.append(f"""
-                    if (!(new RegExp('{validator.get("regex")}').test({field_name}Value))) {{
+                    if (!(new RegExp('{validator.get("regex").replace('\\', '\\\\')}').test({field_name}Value))) {{
                         issues.push({{ message: '{validator.get("message")}', path: ['{field_name}'] }});
                     }}""")
     
