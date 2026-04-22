@@ -26,4 +26,4 @@ urlpatterns = [
         TodoViewSet.as_view({"get": "get_whos"})
     ),
     path('api/', include(router.urls)),
-] + NuxtStaticUrls() + NuxtCatchAllUrls()
+] + NuxtCatchAllUrls()

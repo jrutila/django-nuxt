@@ -3,6 +3,10 @@ from django.urls import path, re_path
 from django.views.static import serve
 
 def NuxtStaticUrls():
+    """
+    Serve the Nuxt static files with a proxy view.
+    This should not be used in production!
+    """
     nuxt_server_running = getattr(settings, 'DJANGO_NUXT_SERVER_RUNNING', None)
     # Only use the proxy if explicitly set or not explicitly set in DEBUG mode
     if nuxt_server_running or (settings.DEBUG and nuxt_server_running is None):
@@ -25,20 +29,29 @@ def NuxtStaticUrls():
         ]
 
     dj_static_root = getattr(settings, "DJANGO_NUXT_STATIC_ROOT", None)
+    nuxt_assets_dir = getattr(settings, 'DJANGO_NUXT_GENERATED_ASSETS_DIR', '_nuxt/')
     if dj_static_root is None and settings.DEBUG:
         nuxt_generated_folder = getattr(settings, 'DJANGO_NUXT_GENERATED_FOLDER', 'ui/.output/public/')
+        document_root = f'{nuxt_generated_folder}{nuxt_assets_dir}'
     else:
-        nuxt_generated_folder = getattr(settings, "DJANGO_NUXT_STATIC_ROOT", settings.STATIC_ROOT)
+        document_root = f'{dj_static_root or settings.STATIC_ROOT}/{nuxt_assets_dir}'
+    
+    dj_static_url = getattr(settings, 'DJANGO_NUXT_STATIC_URL', "")
+    nuxt_static_url = f'{dj_static_url}{nuxt_assets_dir}'
 
     return [
-        re_path(r'^_nuxt/(?P<path>.*)$', serve, kwargs={
-            'document_root': f'{nuxt_generated_folder}/_nuxt',
+        re_path(fr'^{nuxt_static_url}(?P<path>.*)$', serve, kwargs={
+            'document_root': document_root,
         }),
     ]
 
 def NuxtCatchAllUrls():
     from django_nuxt import views
 
-    return [
+    nuxt_static_urls = []
+    if settings.DEBUG:
+        nuxt_static_urls = NuxtStaticUrls()
+
+    return nuxt_static_urls + [
         re_path(r'^(?!\.).*$', views.nuxt_proxy, name='nuxt_catch_all'),
     ]

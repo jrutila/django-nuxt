@@ -40,7 +40,7 @@ INSTALLED_APPS = [
 ]
 
 #DJANGO_NUXT_GENERATED_FOLDER = 'ui/.output/public/'
-#DJANGO_NUXT_SERVER_RUNNING = False
+DJANGO_NUXT_SERVER_RUNNING = True
 DJANGO_NUXT_DATA_PROCESSORS = [
     "django_nuxt.data_processor.nuxt_schema_data_processor",
 ]

@@ -41,17 +41,20 @@ STATICFILES_FINDERS = [
 and in the project's `urls.py` file, add the following:	
 
 ```python
-from django_nuxt.urls import NuxtStaticUrls, NuxtCatchAllUrls
+from django_nuxt.urls import NuxtCatchAllUrls
 
 urlpatterns = [
     ...,
-] + NuxtStaticUrls() + NuxtCatchAllUrls()
+] + NuxtCatchAllUrls()
 ```
 
-For development (settings.DEBUG = True), have the Nuxt development server running the same time with
-Django development server.
+`NuxtCatchAllUrls` is a proxy that will forward all requests to the Nuxt development server if the server is running or load the default `200.html` template. When in DEBUG mode, it will also serve the Nuxt static files with a proxy view.
+
+For development (settings.DEBUG = True), have the Nuxt development server running the same time with Django development server.
 
 For production, generate the Nuxt files with `nuxt generate` and then collect the static files with `python manage.py collectstatic`.
+
+Remember, when serving the Nuxt static files (`_nuxt` folder) in production, you might have to configure that independent from other Django static files as Nuxt tries to find the files under the `/_nuxt/` path, not `/static/_nuxt/`.
 
 ## Settings
 
@@ -63,6 +66,16 @@ This value should be None in production.
 ### DJANGO_NUXT_GENERATED_FOLDER
 
 The folder where the Nuxt generated files are stored. Default is `ui/.output/public/`.
+
+### DJANGO_NUXT_GENERATED_ASSETS_DIR
+
+The folder inside the DJANGO_NUXT_GENERATED_FOLDER folder that will be used to serve the Nuxt static files (not the 200.html, but the _nuxt folder). Default is `_nuxt/`.
+
+This affects the Django static file collecting. Remember, when you serve the files, by default, Nuxt tries to find the files under the `/_nuxt/` path, not `/static/`.
+
+#### Serving the nuxt files with WhiteNoise
+
+If you are using WhiteNoise, you can set the `DJANGO_NUXT_GENERATED_ASSETS_DIR` to `static/_nuxt/` so that WhiteNoise can serve the Nuxt static files. When generating the Nuxt build, run it with `NUXT_APP_BUILD_ASSETS_DIR=/static/_nuxt/ nuxt generate` so that Nuxt tries to find the `_nuxt` files under the `static` path.
 
 ### DJANGO_NUXT_PUBLIC_FOLDER
 
@@ -82,3 +95,9 @@ By default, injects the following settings:
 ### DJANGO_NUXT_TEMPLATE_NAME
 
 The name of the template that will be used to render the Nuxt page. This should not be changed. Default is `_nuxt`.
+
+### DJANGO_NUXT_STATIC_URL
+
+If you really need to fine tune the NuxtStaticUrls helper, you can set the `DJANGO_NUXT_STATIC_URL` to the prefix that will be used to serve the Nuxt static files. Default is an empty string.
+
+Remember, you should not use NuxtStaticUrls in production!

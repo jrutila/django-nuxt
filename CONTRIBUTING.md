@@ -84,7 +84,7 @@ uv run manage.py createsuperuser
 
 Nuxt runs on port `3000`, and Django on port `8000`.
 
-### Example 2: Generated static mode (without Nuxt dev server)
+### Example 2: Generated static mode (with Nuxt dev server)
 
 Use this to test production-like static output serving from Django.
 
@@ -92,13 +92,11 @@ Use this to test production-like static output serving from Django.
 
 ```bash
 cd example/basic/ui
-npm install
-npm run generate
+pnpm install
+pnpm run generate
 ```
 
 2. In `example/basic/basic/settings.py`, ensure this is configured:
-
-- `DJANGO_NUXT_GENERATED_FOLDER = 'ui/.output/public/'`
 - `DJANGO_NUXT_SERVER_RUNNING = False`
 
 3. Run Django:
@@ -106,6 +104,26 @@ npm run generate
 ```bash
 cd example/basic
 uv run python manage.py migrate
+uv run python manage.py runserver
+```
+
+### Example 3: Generated static mode with collected static and non-debug mode
+
+Do steps 1 and 2 from Example 2.
+
+3. Run Django:
+
+Set `DEBUG=False` in `example/basic/basic/settings.py`.
+
+```bash
+cd example/basic
+uv run python manage.py collectstatic
+```
+
+Check that there is a `_nuxt` folder in the `staticfiles` directory (without the `/static/` prefix).
+Add `NuxtStaticUrls()` to the `urlpatterns` in `example/basic/basic/urls.py` as we are serving the Nuxt files with `runserver` next. In production, you should not use `NuxtStaticUrls()` but configure the `/_nuxt/` static file serving independently.
+
+```bash	
 uv run python manage.py runserver
 ```
 
