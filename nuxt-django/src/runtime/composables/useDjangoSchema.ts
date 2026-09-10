@@ -3,7 +3,7 @@ import { useRuntimeConfig } from "#app"
 import { ref } from "vue"
 import { useDjangoNuxt } from "./useDjangoNuxt"
 import { useDjangoNuxtModelPath } from "./useDjangoNuxtModelPath"
-import { useFetch } from "nuxt/app"
+import { useDjangoApi } from "./useDjangoApi"
 import type { AsyncData } from "nuxt/app"
 
 type DjangoSchema = Record<string, any>
@@ -30,7 +30,7 @@ export const useDjangoSchema = async (model: string, query: Record<string, Ref<a
   }
   if (error.value || Object.keys(query).length > 0) {
     const path = useDjangoNuxtModelPath(model)
-    return { ...(await useFetch<any>(path, {
+    return { ...(await useDjangoApi<any>(path, {
       query: query,
       method: 'OPTIONS',
       transform: (data) => {

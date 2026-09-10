@@ -252,7 +252,7 @@ Nuxt can now just fetch the data from the API and show it in the page.
     </ul>
   </div>
 
-  const { data: todos } = useFetch('/api/todos/')
+  const { data: todos } = await useDjangoApi('/api/todos/')
 ```
 
 ## Collecting static files for production use

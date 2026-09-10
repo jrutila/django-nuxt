@@ -1,6 +1,6 @@
 import type { Ref } from "vue"
 import { computed, ref } from "vue"
-import { useFetch } from "nuxt/app"
+import { useDjangoApi } from "./useDjangoApi"
 import type { FetchError } from 'ofetch'
 import type { AsyncData, UseFetchOptions } from "nuxt/app"
 import { useDjangoNuxtModelPath } from "./useDjangoNuxtModelPath"
@@ -32,7 +32,7 @@ export const useDjangoModel = async (model: string, query: Record<string, Ref<an
   })
 
   const path = useDjangoNuxtModelPath(model, query)
-  return { ...(await useFetch<any[]>(path, {
+  return { ...(await useDjangoApi<any[]>(path, {
     query: q,
     method: 'GET',
     transform: (data) => {

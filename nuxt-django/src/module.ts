@@ -1,12 +1,16 @@
-import { defineNuxtModule, addPlugin, createResolver, addImportsDir, addImports } from '@nuxt/kit'
+import { defineNuxtModule, addPlugin, createResolver, addImports, addTypeTemplate } from '@nuxt/kit'
 
 // Module options TypeScript interface definition
 export interface ModuleOptions {
   schemaKey?: string
+  apiPath?: string
+  baseURL?: string
 }
 
 export interface NuxtDjangoRuntimeConfig {
   schemaKey?: string
+  apiPath?: string
+  baseURL?: string
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -22,8 +26,25 @@ export default defineNuxtModule<ModuleOptions>({
     // Do not add the extension since the `.ts` will be transpiled to `.mjs` after `npm run prepack`
     addPlugin(resolver.resolve('./runtime/plugins/django-drf-csrf'))
     addPlugin(resolver.resolve('./runtime/plugins/django-nuxt'))
+    addTypeTemplate({
+      filename: 'types/nuxt-django.d.ts',
+      getContents: () => `import type { $Fetch } from 'ofetch'
+
+declare module '#app' {
+  interface NuxtApp {
+    $djangoApi: $Fetch
+  }
+}
+`,
+    })
+    nuxt.options.optimization = nuxt.options.optimization || {}
+    nuxt.options.optimization.keyedComposables = nuxt.options.optimization.keyedComposables || []
+    nuxt.options.optimization.keyedComposables.push({
+      name: 'useDjangoApi',
+      argumentLength: 2,
+    })
     addImports([
-      'useDjangoNuxt', 'useDjangoSchema', 'useDjangoModel', 'useDjangoNuxtModelPath',
+      'useDjangoApi', 'useDjangoNuxt', 'useDjangoSchema', 'useDjangoModel', 'useDjangoNuxtModelPath',
     ].map(name => ({
       from: resolver.resolve(`./runtime/composables/${name}`),
       name,
