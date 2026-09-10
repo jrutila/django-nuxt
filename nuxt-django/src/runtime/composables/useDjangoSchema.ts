@@ -17,7 +17,7 @@ export const useDjangoSchema = async (model: string, query: Record<string, Ref<a
   if (Object.keys(query).length === 0) {
     const config = useRuntimeConfig()
     const schemaKey = config.public.nuxtDjango?.schemaKey || 'schema'
-    const schema = useDjangoNuxt().value[schemaKey]
+    const schema = useDjangoNuxt()[schemaKey]
     if (!schema) {
       error.value = new Error(`Schema key ${schemaKey} not found`)
     }

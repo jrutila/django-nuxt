@@ -32,6 +32,7 @@
       You don't have permission to add todos
     </div>
 
+    <!--
     <h2>Whos</h2>
     <div class="flex flex-row gap-2" v-for="who in whos" :key="who.id">
       <span>{{ who.name }}</span>
@@ -46,11 +47,12 @@
       </UFormField>
       <UButton label="Create" color="primary" variant="solid" type="submit" />
     </UForm>
+    -->
   </UApp>
 </template>
 
 <script setup>
-const user = ref(window.django_nuxt.user)
+const { user } = useDjangoNuxt()
 
 const { data: todos, refresh } = await useDjangoModel('todo')
 const { data: whos } = await useDjangoModel('who')
