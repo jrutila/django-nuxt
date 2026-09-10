@@ -1,4 +1,5 @@
-import { createUseFetch, useNuxtApp } from '#app'
+import { createUseFetch } from '#app/composables/fetch'
+import { useNuxtApp } from '#app'
 
 type CreateUseFetchWithFactory = typeof createUseFetch & {
   __nuxt_factory?: typeof createUseFetch
