@@ -8,7 +8,7 @@ Django and Nuxt, match made in heaven
 - Nuxt static files are served from Django
 - In development mode, Nuxt and Django live reloads are working
  - Django Debug Toolbar is working
- - Nuxt DevTools are working (Django reverse-proxies Nuxt on port 8000)
+ - Nuxt DevTools are working (Django reverse-proxies DevTools on port 8000; Vite modules and fonts redirect to Nuxt)
 
 ## Caveats
 
@@ -47,11 +47,11 @@ urlpatterns = [
 ] + NuxtCatchAllUrls()
 ```
 
-`NuxtCatchAllUrls` reverse-proxies unmatched requests to the Nuxt development server when it is running (HTML, `/_nuxt/` modules, fonts, DevTools, HMR). The browser only talks to Django (usually port 8000). Nuxt still listens on port 3000, but the `nuxt-django` module tells Vite that the public origin is Django. If the Nuxt server is not running, Django loads the generated `200.html` template.
+`NuxtCatchAllUrls` reverse-proxies unmatched HTML to the Nuxt development server when it is running so Django can inject `window.django_nuxt`. DevTools (`/__nuxt_devtools__/`) stay on the Django origin (usually port 8000). Vite modules (`/_nuxt/`) and fonts (`/fonts/`, `/_fonts/`) 302-redirect to Nuxt (usually port 3000) so HMR and assets skip Django's connection budget. If the Nuxt server is not running, Django loads the generated `200.html` template.
 
-For development (`settings.DEBUG = True`), run the Nuxt development server at the same time as Django. Open the app at `http://localhost:8000/` — do not use port 3000 in the browser.
+For development (`settings.DEBUG = True`), run the Nuxt development server at the same time as Django. Open the app at `http://localhost:8000/` — do not use port 3000 as the page origin.
 
-The Nuxt module defaults the public origin to `http://localhost:8000`. Override it with `nuxtDjango.devOrigin` or the `NUXT_DJANGO_DEV_ORIGIN` environment variable.
+The Nuxt module defaults the Django page origin to `http://localhost:8000` (used for `allowedHosts` and CORS). Override it with `nuxtDjango.devOrigin` or the `NUXT_DJANGO_DEV_ORIGIN` environment variable.
 
 For production, generate the Nuxt files with `nuxt generate` and then collect the static files with `python manage.py collectstatic`.
 

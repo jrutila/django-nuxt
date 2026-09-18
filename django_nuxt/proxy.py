@@ -66,7 +66,14 @@ def _rewrite_location(location, upstream_url, request):
     ))
 
 
-def _forward_request_headers(request):
+def _devtools_listen_origin(upstream_url):
+    parsed = urlparse(upstream_url) if upstream_url else None
+    if not parsed or not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}"
+
+
+def _forward_request_headers(request, upstream_url=None):
     headers = {}
     for name, value in request.headers.items():
         if name.lower() in EXCLUDED_REQUEST_HEADERS:
@@ -83,6 +90,13 @@ def _forward_request_headers(request):
         headers["X-Forwarded-For"] = f"{existing_xff}, {remote_addr}"
     elif remote_addr:
         headers["X-Forwarded-For"] = remote_addr
+
+    listen_origin = _devtools_listen_origin(upstream_url)
+    if listen_origin and request.path.startswith("/__nuxt_devtools__"):
+        for key in list(headers):
+            if key.lower() == "origin":
+                del headers[key]
+        headers["Origin"] = listen_origin
     return headers
 
 
@@ -119,7 +133,7 @@ def proxy_nuxt_request(request):
         return HttpResponse("Nuxt is not running", status=503)
 
     url = upstream_url.rstrip("/") + request.get_full_path()
-    headers = _forward_request_headers(request)
+    headers = _forward_request_headers(request, upstream_url)
 
     try:
         upstream = get_proxy_session().request(
@@ -150,7 +164,7 @@ def proxy_nuxt_request(request):
         finally:
             upstream.close()
 
-    if "text/html" in content_type:
+    if "text/html" in content_type and not request.path.startswith("/__nuxt_devtools__"):
         try:
             html = render_nuxt_html(upstream.text, request)
         finally:
@@ -203,12 +217,26 @@ def _upstream_address(upstream_url):
     return host, port
 
 
-def _build_upstream_handshake(handler):
+def _build_upstream_handshake(handler, upstream_url=None):
+    parsed = urlparse(upstream_url) if upstream_url else None
+    rewrite_devtools_origin = (
+        parsed
+        and parsed.netloc
+        and handler.path.startswith("/__nuxt_devtools__")
+    )
+    nuxt_host = parsed.netloc if rewrite_devtools_origin else None
+    nuxt_origin = _devtools_listen_origin(upstream_url) if rewrite_devtools_origin else None
+
     parts = [f"{handler.command} {handler.path} {handler.request_version}\r\n"]
     seen = set()
     for name, value in handler.headers.items():
+        lower = name.lower()
+        if rewrite_devtools_origin and lower == "host":
+            value = nuxt_host
+        if rewrite_devtools_origin and lower == "origin":
+            value = nuxt_origin
         parts.append(f"{name}: {value}\r\n")
-        seen.add(name.lower())
+        seen.add(lower)
     host = handler.headers.get("Host", "")
     if host and "x-forwarded-host" not in seen:
         parts.append(f"X-Forwarded-Host: {host}\r\n")
@@ -222,7 +250,7 @@ def tunnel_websocket(handler, upstream_url):
     host, port = _upstream_address(upstream_url)
     upstream = socket.create_connection((host, port), timeout=30)
     try:
-        upstream.sendall(_build_upstream_handshake(handler))
+        upstream.sendall(_build_upstream_handshake(handler, upstream_url))
         client = handler.connection
         sockets = [client, upstream]
         while True:

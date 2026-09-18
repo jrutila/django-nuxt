@@ -38,7 +38,7 @@ export default defineNuxtConfig({
 })
 ```
 
-In development, the module points Vite HMR and asset URLs at Django (`devOrigin` / `NUXT_DJANGO_DEV_ORIGIN`) so Nuxt can keep listening on port 3000 while the browser only uses port 8000.
+In development, Vite modules and fonts load from Nuxt (port 3000). `devOrigin` / `NUXT_DJANGO_DEV_ORIGIN` is the Django page origin (default `http://localhost:8000`) so Vite `allowedHosts` and CORS accept DevTools RPC proxied through Django.
 
 Requires Nuxt **4.4+** for `useDjangoApi` (`createUseFetch`).
 

@@ -122,11 +122,11 @@ urlpatterns = [
 ] + NuxtStaticUrls()
 ```
 
-This will reverse-proxy Nuxt through Django in DEBUG mode when the Nuxt dev server is running, and serve generated `_nuxt/` files from disk otherwise.
+This will reverse-proxy Nuxt HTML and DevTools through Django in DEBUG mode when the Nuxt dev server is running, and serve generated `_nuxt/` files from disk otherwise. Vite modules (`/_nuxt/`) and fonts redirect to the Nuxt origin.
 
-You can test that the proxy works. With both Nuxt (`npm run dev`) and Django (`runserver`) running, open a `_nuxt` URL on the **Django** port (usually `8000`).
+You can test the hybrid setup. With both Nuxt (`npm run dev`) and Django (`runserver`) running, open a `_nuxt` URL on the **Django** port (usually `8000`).
 
-For example, load `http://localhost:3000` once to find a `_nuxt` path in the network tab, then request the same path on port `8000`. Django should return the file itself (no redirect to port 3000).
+For example, request `http://localhost:8000/_nuxt/some-file.js`. Django should **302-redirect** to `http://localhost:3000/_nuxt/some-file.js`. HTML pages and `/__nuxt_devtools__/` stay on port 8000 (no redirect).
 
 ### Nuxt proxy view
 
@@ -144,7 +144,7 @@ urlpatterns = [
 ] + NuxtStaticUrls() + NuxtCatchAllUrls()
 ```
 
-If Nuxt is running and you open `http://localhost:8000/`, you should already see the Nuxt page served by Django (assets and DevTools stay on port 8000). Django routes such as `/admin/` still hit Django because they are registered first.
+If Nuxt is running and you open `http://localhost:8000/`, you should already see the Nuxt page served by Django. DevTools stay on port 8000; `/_nuxt/` modules and fonts redirect to Nuxt on port 3000. Django routes such as `/admin/` still hit Django because they are registered first.
 
 What we still need to add is the template backend so Django can inject `window.django_nuxt` into HTML (and so generated `200.html` works when the Nuxt server is off).
 

@@ -83,29 +83,46 @@ class TestNuxtDevProxy(TestCase):
         self.assertIn("csrftoken", response.cookies)
 
     @patch("django_nuxt.proxy.get_proxy_session")
-    def test_forwards_path_and_query_string(self, mock_get_session):
-        session = _mock_session(mock_get_session, _binary_upstream(b"file", "application/javascript"))
+    def test_nuxt_modules_redirect_to_dev_server(self, mock_get_session):
         response = self.client.get("/_nuxt/app.js?vue=1")
-        response.status_code | should.be.equal.to(200)
-        session.request.call_args.kwargs["url"] | should.be.equal.to(
-            "http://nuxt.test:3000/_nuxt/app.js?vue=1"
-        )
+        response.status_code | should.be.equal.to(302)
+        response["Location"] | should.be.equal.to("http://nuxt.test:3000/_nuxt/app.js?vue=1")
+        mock_get_session.assert_not_called()
 
     @patch("django_nuxt.proxy.get_proxy_session")
-    def test_font_bytes_pass_through(self, mock_get_session):
-        _mock_session(mock_get_session, _binary_upstream(b"\x00woff", "font/woff2"))
+    def test_fonts_redirect_to_dev_server(self, mock_get_session):
         response = self.client.get("/fonts/Inter.woff2")
+        response.status_code | should.be.equal.to(302)
+        response["Location"] | should.be.equal.to("http://nuxt.test:3000/fonts/Inter.woff2")
+        mock_get_session.assert_not_called()
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_underscore_fonts_redirect_to_dev_server(self, mock_get_session):
+        response = self.client.get("/_fonts/Inter.woff2")
+        response.status_code | should.be.equal.to(302)
+        response["Location"] | should.be.equal.to("http://nuxt.test:3000/_fonts/Inter.woff2")
+        mock_get_session.assert_not_called()
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_devtools_does_not_set_csrf_cookie(self, mock_get_session):
+        _mock_session(mock_get_session, _binary_upstream(b"js", "application/javascript"))
+        response = self.client.get("/__nuxt_devtools__/client/app.js")
+        self.assertNotIn("csrftoken", response.cookies)
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_devtools_html_is_not_injected(self, mock_get_session):
+        _mock_session(
+            mock_get_session,
+            _binary_upstream(
+                b"<html><head></head><body>devtools</body></html>",
+                "text/html; charset=utf-8",
+            ),
+        )
+        response = self.client.get("/__nuxt_devtools__/client/modules/payload")
         response.status_code | should.be.equal.to(200)
         body = b"".join(response.streaming_content)
-        self.assertEqual(body, b"\x00woff")
-        response["Content-Type"] | should.be.equal.to("font/woff2")
         self.assertNotIn(b"window.django_nuxt", body)
-
-    @patch("django_nuxt.proxy.get_proxy_session")
-    def test_asset_does_not_set_csrf_cookie(self, mock_get_session):
-        _mock_session(mock_get_session, _binary_upstream(b"js", "application/javascript"))
-        response = self.client.get("/_nuxt/app.js")
-        self.assertNotIn("csrftoken", response.cookies)
+        self.assertIn(b"devtools", body)
 
     @patch("django_nuxt.proxy.get_proxy_session")
     def test_304_returns_empty_body_without_streaming(self, mock_get_session):
@@ -116,7 +133,7 @@ class TestNuxtDevProxy(TestCase):
         upstream.close = MagicMock()
         session = _mock_session(mock_get_session, upstream)
 
-        response = self.client.get("/_nuxt/HobConTime.vue", HTTP_IF_NONE_MATCH='"abc"')
+        response = self.client.get("/__nuxt_devtools__/client/foo.js", HTTP_IF_NONE_MATCH='"abc"')
         response.status_code | should.be.equal.to(304)
         self.assertEqual(response.content, b"")
         self.assertFalse(response.streaming)
@@ -126,8 +143,8 @@ class TestNuxtDevProxy(TestCase):
 
     @patch("django_nuxt.proxy.get_proxy_session")
     def test_forwards_host_as_x_forwarded_headers(self, mock_get_session):
-        session = _mock_session(mock_get_session, _binary_upstream())
-        self.client.get("/fonts/x.woff")
+        session = _mock_session(mock_get_session, _binary_upstream(b"js", "application/javascript"))
+        self.client.get("/__nuxt_devtools__/client/x")
         headers = session.request.call_args.kwargs["headers"]
         headers["X-Forwarded-Host"] | should.be.equal.to("testserver")
         headers["X-Forwarded-Proto"] | should.be.equal.to("http")
@@ -157,11 +174,21 @@ class TestNuxtDevProxy(TestCase):
         str(response.content) | should.contain("Nuxt is not running on http://nuxt.test:3000")
 
     @patch("django_nuxt.proxy.get_proxy_session")
-    def test_post_is_forwarded(self, mock_get_session):
+    def test_devtools_post_is_forwarded(self, mock_get_session):
         session = _mock_session(mock_get_session, _binary_upstream(b"{}", "application/json"))
-        response = self.client.post("/_nuxt/rpc", data={"a": "b"})
+        response = self.client.post("/__nuxt_devtools__/rpc", data={"a": "b"})
         response.status_code | should.be.equal.to(200)
         session.request.call_args.kwargs["method"] | should.be.equal.to("POST")
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_devtools_rewrites_origin_to_nuxt(self, mock_get_session):
+        session = _mock_session(mock_get_session, _binary_upstream(b"{}", "application/json"))
+        self.client.get(
+            "/__nuxt_devtools__/rpc",
+            HTTP_ORIGIN="http://localhost:8000",
+        )
+        headers = session.request.call_args.kwargs["headers"]
+        headers["Origin"] | should.be.equal.to("http://nuxt.test:3000")
 
 
 class TestNuxtDevServerUrl(TestCase):
@@ -230,6 +257,22 @@ class TestWebSocketTunnel(TestCase):
         raw = _build_upstream_handshake(handler)
         self.assertIn(b"GET /__nuxt_devtools__/rpc HTTP/1.1", raw)
         self.assertIn(b"Host: localhost:8000", raw)
+        self.assertIn(b"X-Forwarded-Host: localhost:8000", raw)
+
+    def test_devtools_handshake_rewrites_origin_to_nuxt(self):
+        handler = MagicMock()
+        handler.command = "GET"
+        handler.path = "/__nuxt_devtools__/rpc"
+        handler.request_version = "HTTP/1.1"
+        handler.headers = {
+            "Host": "localhost:8000",
+            "Origin": "http://localhost:8000",
+            "Upgrade": "websocket",
+            "Connection": "Upgrade",
+        }
+        raw = _build_upstream_handshake(handler, "http://localhost:3000")
+        self.assertIn(b"Host: localhost:3000", raw)
+        self.assertIn(b"Origin: http://localhost:3000", raw)
         self.assertIn(b"X-Forwarded-Host: localhost:8000", raw)
 
     @patch("django_nuxt.proxy.select.select")

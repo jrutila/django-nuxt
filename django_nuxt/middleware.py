@@ -1,25 +1,45 @@
 from django.conf import settings
+from django.shortcuts import redirect
 
 from django_nuxt.conf import get_nuxt_dev_server_url
 
 ASSET_MIDDLEWARE = "django_nuxt.middleware.NuxtAssetProxyMiddleware"
 
-NUXT_ASSET_PREFIXES = (
+# Vite modules and fonts: 302 to Nuxt so the browser talks to :3000 directly.
+NUXT_REDIRECT_PREFIXES = (
     "/_nuxt/",
-    "/__nuxt_devtools__/",
     "/_fonts/",
     "/fonts/",
 )
-NUXT_ASSET_EXACT = (
+NUXT_REDIRECT_EXACT = (
     "/_nuxt",
-    "/__nuxt_devtools__",
     "/_fonts",
     "/fonts",
 )
 
+# DevTools must stay same-origin with the Django page.
+NUXT_PROXY_PREFIXES = (
+    "/__nuxt_devtools__/",
+)
+NUXT_PROXY_EXACT = (
+    "/__nuxt_devtools__",
+)
+
+
+def _matches(path, exact, prefixes):
+    return path in exact or path.startswith(prefixes)
+
+
+def is_nuxt_redirect_path(path):
+    return _matches(path, NUXT_REDIRECT_EXACT, NUXT_REDIRECT_PREFIXES)
+
+
+def is_nuxt_proxy_path(path):
+    return _matches(path, NUXT_PROXY_EXACT, NUXT_PROXY_PREFIXES)
+
 
 def is_nuxt_asset_path(path):
-    return path in NUXT_ASSET_EXACT or path.startswith(NUXT_ASSET_PREFIXES)
+    return is_nuxt_redirect_path(path) or is_nuxt_proxy_path(path)
 
 
 def install_asset_proxy_middleware():
@@ -34,8 +54,16 @@ class NuxtAssetProxyMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if get_nuxt_dev_server_url() and is_nuxt_asset_path(request.path):
+        upstream = get_nuxt_dev_server_url()
+        if not upstream:
+            return self.get_response(request)
+
+        if is_nuxt_redirect_path(request.path):
+            return redirect(upstream.rstrip("/") + request.get_full_path())
+
+        if is_nuxt_proxy_path(request.path):
             from django_nuxt.proxy import proxy_nuxt_request
 
             return proxy_nuxt_request(request)
+
         return self.get_response(request)
