@@ -5,12 +5,24 @@ from django.test import TestCase, override_settings
 from grappa import should
 
 from django_nuxt.conf import get_nuxt_dev_server_url
+from django_nuxt.middleware import ASSET_MIDDLEWARE, install_asset_proxy_middleware
 from django_nuxt.proxy import (
     _build_upstream_handshake,
     patch_wsgi_websocket_proxy,
     tunnel_websocket,
 )
 from django_nuxt.urls import NuxtCatchAllUrls, NuxtStaticUrls
+
+NUXT_DEV_MIDDLEWARE = [
+    ASSET_MIDDLEWARE,
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
 
 
 def _html_upstream(body="<html><head></head><body>nuxt</body></html>", status=200, extra_headers=None):
@@ -39,35 +51,49 @@ def _binary_upstream(body=b"\x00\x01\x02", content_type="font/woff2", extra_head
     return resp
 
 
+def _mock_session(mock_get_session, upstream):
+    session = MagicMock()
+    session.request.return_value = upstream
+    mock_get_session.return_value = session
+    return session
+
+
 @override_settings(
     DJANGO_NUXT_SERVER_RUNNING="http://nuxt.test:3000",
     ROOT_URLCONF="tests.proxy_urls",
+    MIDDLEWARE=NUXT_DEV_MIDDLEWARE,
 )
 class TestNuxtDevProxy(TestCase):
-    @patch("django_nuxt.proxy.requests.request")
-    def test_html_is_proxied_without_redirect_and_injects_django_nuxt(self, mock_request):
-        mock_request.return_value = _html_upstream()
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_html_is_proxied_without_redirect_and_injects_django_nuxt(self, mock_get_session):
+        session = _mock_session(mock_get_session, _html_upstream())
         response = self.client.get("/some-page")
         response.status_code | should.be.equal.to(200)
         response.status_code | should.not_be.equal.to(302)
         str(response.content) | should.contain("window.django_nuxt")
         str(response.content) | should.contain("nuxt")
-        mock_request.call_args.kwargs["url"] | should.be.equal.to("http://nuxt.test:3000/some-page")
-        mock_request.call_args.kwargs["allow_redirects"] | should.be.equal.to(False)
-        mock_request.call_args.kwargs["method"] | should.be.equal.to("GET")
+        session.request.call_args.kwargs["url"] | should.be.equal.to("http://nuxt.test:3000/some-page")
+        session.request.call_args.kwargs["allow_redirects"] | should.be.equal.to(False)
+        session.request.call_args.kwargs["method"] | should.be.equal.to("GET")
 
-    @patch("django_nuxt.proxy.requests.request")
-    def test_forwards_path_and_query_string(self, mock_request):
-        mock_request.return_value = _binary_upstream(b"file", "application/javascript")
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_html_sets_csrf_cookie(self, mock_get_session):
+        _mock_session(mock_get_session, _html_upstream())
+        response = self.client.get("/")
+        self.assertIn("csrftoken", response.cookies)
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_forwards_path_and_query_string(self, mock_get_session):
+        session = _mock_session(mock_get_session, _binary_upstream(b"file", "application/javascript"))
         response = self.client.get("/_nuxt/app.js?vue=1")
         response.status_code | should.be.equal.to(200)
-        mock_request.call_args.kwargs["url"] | should.be.equal.to(
+        session.request.call_args.kwargs["url"] | should.be.equal.to(
             "http://nuxt.test:3000/_nuxt/app.js?vue=1"
         )
 
-    @patch("django_nuxt.proxy.requests.request")
-    def test_font_bytes_pass_through(self, mock_request):
-        mock_request.return_value = _binary_upstream(b"\x00woff", "font/woff2")
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_font_bytes_pass_through(self, mock_get_session):
+        _mock_session(mock_get_session, _binary_upstream(b"\x00woff", "font/woff2"))
         response = self.client.get("/fonts/Inter.woff2")
         response.status_code | should.be.equal.to(200)
         body = b"".join(response.streaming_content)
@@ -75,39 +101,67 @@ class TestNuxtDevProxy(TestCase):
         response["Content-Type"] | should.be.equal.to("font/woff2")
         self.assertNotIn(b"window.django_nuxt", body)
 
-    @patch("django_nuxt.proxy.requests.request")
-    def test_forwards_host_as_x_forwarded_headers(self, mock_request):
-        mock_request.return_value = _binary_upstream()
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_asset_does_not_set_csrf_cookie(self, mock_get_session):
+        _mock_session(mock_get_session, _binary_upstream(b"js", "application/javascript"))
+        response = self.client.get("/_nuxt/app.js")
+        self.assertNotIn("csrftoken", response.cookies)
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_304_returns_empty_body_without_streaming(self, mock_get_session):
+        upstream = MagicMock()
+        upstream.status_code = 304
+        upstream.headers = {"ETag": '"abc"', "Cache-Control": "no-cache"}
+        upstream.iter_content = MagicMock(side_effect=AssertionError("should not stream 304"))
+        upstream.close = MagicMock()
+        session = _mock_session(mock_get_session, upstream)
+
+        response = self.client.get("/_nuxt/HobConTime.vue", HTTP_IF_NONE_MATCH='"abc"')
+        response.status_code | should.be.equal.to(304)
+        self.assertEqual(response.content, b"")
+        self.assertFalse(response.streaming)
+        upstream.iter_content.assert_not_called()
+        response["ETag"] | should.be.equal.to('"abc"')
+        session.request.call_args.kwargs["headers"]["If-None-Match"] | should.be.equal.to('"abc"')
+
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_forwards_host_as_x_forwarded_headers(self, mock_get_session):
+        session = _mock_session(mock_get_session, _binary_upstream())
         self.client.get("/fonts/x.woff")
-        headers = mock_request.call_args.kwargs["headers"]
+        headers = session.request.call_args.kwargs["headers"]
         headers["X-Forwarded-Host"] | should.be.equal.to("testserver")
         headers["X-Forwarded-Proto"] | should.be.equal.to("http")
 
-    @patch("django_nuxt.proxy.requests.request")
-    def test_rewrites_location_header_to_django_origin(self, mock_request):
-        mock_request.return_value = _binary_upstream(
-            b"",
-            "text/plain",
-            extra_headers={"Location": "http://nuxt.test:3000/other"},
-            status=302,
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_rewrites_location_header_to_django_origin(self, mock_get_session):
+        _mock_session(
+            mock_get_session,
+            _binary_upstream(
+                b"",
+                "text/plain",
+                extra_headers={"Location": "http://nuxt.test:3000/other"},
+                status=302,
+            ),
         )
         response = self.client.get("/moved")
         response.status_code | should.be.equal.to(302)
         response["Location"] | should.be.equal.to("http://testserver/other")
 
-    @patch("django_nuxt.proxy.requests.request")
-    def test_returns_503_when_nuxt_is_down(self, mock_request):
-        mock_request.side_effect = requests.RequestException("down")
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_returns_503_when_nuxt_is_down(self, mock_get_session):
+        session = MagicMock()
+        session.request.side_effect = requests.RequestException("down")
+        mock_get_session.return_value = session
         response = self.client.get("/")
         response.status_code | should.be.equal.to(503)
         str(response.content) | should.contain("Nuxt is not running on http://nuxt.test:3000")
 
-    @patch("django_nuxt.proxy.requests.request")
-    def test_post_is_forwarded(self, mock_request):
-        mock_request.return_value = _binary_upstream(b"{}", "application/json")
+    @patch("django_nuxt.proxy.get_proxy_session")
+    def test_post_is_forwarded(self, mock_get_session):
+        session = _mock_session(mock_get_session, _binary_upstream(b"{}", "application/json"))
         response = self.client.post("/_nuxt/rpc", data={"a": "b"})
         response.status_code | should.be.equal.to(200)
-        mock_request.call_args.kwargs["method"] | should.be.equal.to("POST")
+        session.request.call_args.kwargs["method"] | should.be.equal.to("POST")
 
 
 class TestNuxtDevServerUrl(TestCase):
@@ -150,6 +204,16 @@ class TestNuxtUrlHelpers(TestCase):
         urls = NuxtCatchAllUrls()
         urls[-1].name | should.be.equal.to("nuxt_catch_all")
         urls[-1].callback.__name__ | should.be.equal.to("nuxt_proxy")
+
+
+class TestAssetProxyMiddlewareInstall(TestCase):
+    def test_install_prepends_once(self):
+        with self.settings(MIDDLEWARE=["django.middleware.csrf.CsrfViewMiddleware"]):
+            install_asset_proxy_middleware()
+            from django.conf import settings
+            settings.MIDDLEWARE[0] | should.be.equal.to(ASSET_MIDDLEWARE)
+            install_asset_proxy_middleware()
+            settings.MIDDLEWARE.count(ASSET_MIDDLEWARE) | should.be.equal.to(1)
 
 
 class TestWebSocketTunnel(TestCase):

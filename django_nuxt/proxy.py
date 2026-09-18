@@ -6,9 +6,11 @@ from urllib.parse import urlparse, urlunparse
 import requests
 from django.core.servers.basehttp import ServerHandler, WSGIRequestHandler
 from django.http import HttpResponse, StreamingHttpResponse
+from django.middleware.csrf import get_token
 from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_exempt
+from requests.adapters import HTTPAdapter
 
 from django_nuxt.backends import render_nuxt_html
 from django_nuxt.conf import get_nuxt_dev_server_url
@@ -27,8 +29,21 @@ HOP_BY_HOP_HEADERS = {
 }
 
 EXCLUDED_REQUEST_HEADERS = HOP_BY_HOP_HEADERS | {"content-length"}
+EMPTY_BODY_STATUSES = {204, 304}
 
 _wsgi_websocket_patched = False
+_proxy_session = None
+
+
+def get_proxy_session():
+    """Shared HTTP client so Vite module requests reuse keep-alive connections."""
+    global _proxy_session
+    if _proxy_session is None:
+        _proxy_session = requests.Session()
+        adapter = HTTPAdapter(pool_connections=20, pool_maxsize=20)
+        _proxy_session.mount("http://", adapter)
+        _proxy_session.mount("https://", adapter)
+    return _proxy_session
 
 
 def _rewrite_location(location, upstream_url, request):
@@ -92,44 +107,37 @@ def _stream_upstream(upstream):
         upstream.close()
 
 
-@method_decorator(csrf_exempt, name="dispatch")
-@method_decorator(ensure_csrf_cookie, name="dispatch")
-class NuxtDevProxyView(View):
-    """Reverse-proxy HTTP requests to the Nuxt development server."""
+def _maybe_exempt_devtools(request, response):
+    if request.path.startswith("/__nuxt_devtools__"):
+        response.xframe_options_exempt = True
 
-    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options", "trace"]
 
-    def dispatch(self, request, *args, **kwargs):
-        return self.proxy(request)
+def proxy_nuxt_request(request):
+    """Reverse-proxy a Django request to the Nuxt development server."""
+    upstream_url = get_nuxt_dev_server_url()
+    if not upstream_url:
+        return HttpResponse("Nuxt is not running", status=503)
 
-    def proxy(self, request):
-        upstream_url = get_nuxt_dev_server_url()
-        if not upstream_url:
-            return HttpResponse("Nuxt is not running", status=503)
+    url = upstream_url.rstrip("/") + request.get_full_path()
+    headers = _forward_request_headers(request)
 
-        url = upstream_url.rstrip("/") + request.get_full_path()
-        headers = _forward_request_headers(request)
+    try:
+        upstream = get_proxy_session().request(
+            method=request.method,
+            url=url,
+            headers=headers,
+            data=request.body,
+            stream=True,
+            allow_redirects=False,
+            timeout=(10, 60),
+        )
+    except requests.RequestException:
+        return HttpResponse(f"Nuxt is not running on {upstream_url}", status=503)
 
+    content_type = upstream.headers.get("Content-Type", "")
+    if request.method == "HEAD" or upstream.status_code in EMPTY_BODY_STATUSES:
         try:
-            upstream = requests.request(
-                method=request.method,
-                url=url,
-                headers=headers,
-                data=request.body,
-                stream=True,
-                allow_redirects=False,
-                timeout=(10, 60),
-            )
-        except requests.RequestException:
-            return HttpResponse(f"Nuxt is not running on {upstream_url}", status=503)
-
-        content_type = upstream.headers.get("Content-Type", "")
-        if request.method != "HEAD" and "text/html" in content_type:
-            try:
-                html = render_nuxt_html(upstream.text, request)
-            finally:
-                upstream.close()
-            response = HttpResponse(html, status=upstream.status_code, content_type=content_type)
+            response = HttpResponse(status=upstream.status_code, content_type=content_type or None)
             _copy_response_headers(
                 response,
                 upstream.headers,
@@ -137,15 +145,18 @@ class NuxtDevProxyView(View):
                 request,
                 skip={"content-encoding", "content-length"},
             )
-            if request.path.startswith("/__nuxt_devtools__"):
-                response.xframe_options_exempt = True
+            _maybe_exempt_devtools(request, response)
             return response
+        finally:
+            upstream.close()
 
-        response = StreamingHttpResponse(
-            _stream_upstream(upstream),
-            status=upstream.status_code,
-            content_type=content_type or None,
-        )
+    if "text/html" in content_type:
+        try:
+            html = render_nuxt_html(upstream.text, request)
+        finally:
+            upstream.close()
+        get_token(request)
+        response = HttpResponse(html, status=upstream.status_code, content_type=content_type)
         _copy_response_headers(
             response,
             upstream.headers,
@@ -153,9 +164,33 @@ class NuxtDevProxyView(View):
             request,
             skip={"content-encoding", "content-length"},
         )
-        if request.path.startswith("/__nuxt_devtools__"):
-            response.xframe_options_exempt = True
+        _maybe_exempt_devtools(request, response)
         return response
+
+    response = StreamingHttpResponse(
+        _stream_upstream(upstream),
+        status=upstream.status_code,
+        content_type=content_type or None,
+    )
+    _copy_response_headers(
+        response,
+        upstream.headers,
+        upstream_url,
+        request,
+        skip={"content-encoding", "content-length"},
+    )
+    _maybe_exempt_devtools(request, response)
+    return response
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class NuxtDevProxyView(View):
+    """Reverse-proxy HTTP requests to the Nuxt development server."""
+
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options", "trace"]
+
+    def dispatch(self, request, *args, **kwargs):
+        return proxy_nuxt_request(request)
 
 
 def _upstream_address(upstream_url):
