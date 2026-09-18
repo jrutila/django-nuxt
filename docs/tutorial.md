@@ -122,17 +122,15 @@ urlpatterns = [
 ] + NuxtStaticUrls()
 ```
 
-This will take care of the Nuxt static files (beginning with `_nuxt/`) in django DEBUG mode _and_ in production.
+This will reverse-proxy Nuxt through Django in DEBUG mode when the Nuxt dev server is running, and serve generated `_nuxt/` files from disk otherwise.
 
-You can test that the proxy works. Load the Nuxt welcome page in the browser (usually `http://localhost:3000`) and look for any `_nuxt/` requests.
+You can test that the proxy works. With both Nuxt (`npm run dev`) and Django (`runserver`) running, open a `_nuxt` URL on the **Django** port (usually `8000`).
 
-For example, I had this in the network tab: `http://localhost:3000/_nuxt/@fs/path/django-nuxt/example/basic/ui/node_modules/nuxt/dist/app/components/welcome.vue?vue&type=style&index=0&scoped=8ffa6876&lang.css`
-
-Now, copy the URL and change the port to Django port (usually `8000`). You should see the same file loaded correctly. (It does a redirect.)
+For example, load `http://localhost:3000` once to find a `_nuxt` path in the network tab, then request the same path on port `8000`. Django should return the file itself (no redirect to port 3000).
 
 ### Nuxt proxy view
 
-`django-nuxt` provides a view that can be used to proxy Nuxt requests to Django.
+`django-nuxt` reverse-proxies unmatched routes to Nuxt in development, and renders the generated SPA template when Nuxt is not running.
 
 In the `basic/urls.py` file, add the following:
 
@@ -146,9 +144,9 @@ urlpatterns = [
 ] + NuxtStaticUrls() + NuxtCatchAllUrls()
 ```
 
-If you now try to open the Django page `http://localhost:8000/` you should see `TemplateDoesNotExist at /_nuxt` error. This means the `NuxtCatchAllUrls` is working.
+If Nuxt is running and you open `http://localhost:8000/`, you should already see the Nuxt page served by Django (assets and DevTools stay on port 8000). Django routes such as `/admin/` still hit Django because they are registered first.
 
-What we still need to add is the template backend for the Nuxt pages.
+What we still need to add is the template backend so Django can inject `window.django_nuxt` into HTML (and so generated `200.html` works when the Nuxt server is off).
 
 In the `basic/settings.py` file, add the following:
 

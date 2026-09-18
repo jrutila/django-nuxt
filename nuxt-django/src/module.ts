@@ -5,6 +5,8 @@ export interface ModuleOptions {
   schemaKey?: string
   apiPath?: string
   baseURL?: string
+  /** Public Django origin the browser uses in development. Default http://localhost:8000 */
+  devOrigin?: string
 }
 
 export interface NuxtDjangoRuntimeConfig {
@@ -66,5 +68,44 @@ declare module '#app' {
     nuxt.options.runtimeConfig.public.nuxtDjango.schemaKey = options.schemaKey || '{{ NUXT_DJANGO_SCHEMA_KEY }}'
     nuxt.options.runtimeConfig.public.nuxtDjango.apiPath = options.apiPath || '{{ NUXT_DJANGO_API_PATH }}'
     nuxt.options.runtimeConfig.public.nuxtDjango.baseURL = options.baseURL || '{{ NUXT_DJANGO_BASE_URL }}'
+
+    if (nuxt.options.dev) {
+      const devOrigin = options.devOrigin || process.env.NUXT_DJANGO_DEV_ORIGIN || 'http://localhost:8000'
+      let origin: URL
+      try {
+        origin = new URL(devOrigin)
+      }
+      catch {
+        origin = new URL('http://localhost:8000')
+      }
+
+      const isHttps = origin.protocol === 'https:'
+      const clientPort = origin.port ? Number(origin.port) : (isHttps ? 443 : 80)
+
+      nuxt.options.vite = nuxt.options.vite || {}
+      const viteServer = nuxt.options.vite.server = nuxt.options.vite.server || {}
+      if (!viteServer.origin) {
+        viteServer.origin = origin.origin
+      }
+
+      if (viteServer.hmr !== false) {
+        const existingHmr = typeof viteServer.hmr === 'object' && viteServer.hmr ? viteServer.hmr : {}
+        viteServer.hmr = {
+          protocol: isHttps ? 'wss' : 'ws',
+          clientPort,
+          ...existingHmr,
+        }
+      }
+
+      if (viteServer.allowedHosts !== true) {
+        const hosts = Array.isArray(viteServer.allowedHosts) ? [...viteServer.allowedHosts] : []
+        for (const host of [origin.hostname, 'localhost', '127.0.0.1']) {
+          if (host && !hosts.includes(host)) {
+            hosts.push(host)
+          }
+        }
+        viteServer.allowedHosts = hosts
+      }
+    }
   },
 })

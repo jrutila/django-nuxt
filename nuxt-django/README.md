@@ -32,9 +32,13 @@ export default defineNuxtConfig({
     schemaKey: '...',
     apiPath: '/api/',
     baseURL: 'http://localhost:8000',
+    // Public origin the browser uses in development (Django). Default: http://localhost:8000
+    devOrigin: 'http://localhost:8000',
   },
 })
 ```
+
+In development, the module points Vite HMR and asset URLs at Django (`devOrigin` / `NUXT_DJANGO_DEV_ORIGIN`) so Nuxt can keep listening on port 3000 while the browser only uses port 8000.
 
 Requires Nuxt **4.4+** for `useDjangoApi` (`createUseFetch`).
 

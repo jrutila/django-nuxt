@@ -82,7 +82,7 @@ uv run manage.py createsuperuser
 
 4. Open <http://127.0.0.1:8000/>.
 
-Nuxt runs on port `3000`, and Django on port `8000`.
+Nuxt still listens on port `3000`, but the browser should only use Django on port `8000`. Django reverse-proxies pages, assets, fonts, HMR, and DevTools to Nuxt.
 
 ### Example 2: Generated static mode (with Nuxt dev server)
 

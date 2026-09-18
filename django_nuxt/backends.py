@@ -7,6 +7,7 @@ from django.contrib.auth import get_user
 from django.middleware.csrf import rotate_token
 import json
 from django.utils.module_loading import import_string
+from django_nuxt.conf import get_nuxt_dev_server_url
 
 class NuxtDjangoTemplateBackend(BaseEngine):
     # Name of the subdirectory containing the templates for this engine
@@ -29,10 +30,8 @@ class NuxtDjangoTemplateBackend(BaseEngine):
         if template_name != nuxt_template_name:
             raise TemplateDoesNotExist(template_name)
 
-        nuxt_server_running = getattr(settings, 'DJANGO_NUXT_SERVER_RUNNING', None)
-        if nuxt_server_running or (settings.DEBUG and nuxt_server_running is None):
-            if nuxt_server_running is True or nuxt_server_running is None:
-                nuxt_server_running = 'http://localhost:3000'
+        nuxt_server_running = get_nuxt_dev_server_url()
+        if nuxt_server_running:
             import requests
             try:
                 response = requests.get(nuxt_server_running)
@@ -42,6 +41,18 @@ class NuxtDjangoTemplateBackend(BaseEngine):
               raise Exception(f"Nuxt is not running on {nuxt_server_running}")
 
         return Template(self.engine.get_template('200.html'))
+
+def render_nuxt_html(html, request, context=None):
+    """Django-render Nuxt HTML and inject window.django_nuxt."""
+    from django.template import engines
+
+    for backend in engines.all():
+        if isinstance(backend, NuxtDjangoTemplateBackend):
+            return backend.from_string(html).render(context, request)
+
+    nuxt_generated_folder = getattr(settings, 'DJANGO_NUXT_GENERATED_FOLDER', 'ui/.output/public/')
+    engine = Engine([nuxt_generated_folder], False)
+    return Template(engine.from_string(html)).render(context, request)
 
 class Template:
     def __init__(self, template):

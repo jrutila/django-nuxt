@@ -8,12 +8,11 @@ Django and Nuxt, match made in heaven
 - Nuxt static files are served from Django
 - In development mode, Nuxt and Django live reloads are working
  - Django Debug Toolbar is working
- - Nuxt devtools are not working, yet
+ - Nuxt DevTools are working (Django reverse-proxies Nuxt on port 8000)
 
 ## Caveats
 
 - Nuxt SSR is not supported, yet
-- Nuxt devtools are not working, yet
 
 ## Installation
 
@@ -48,9 +47,11 @@ urlpatterns = [
 ] + NuxtCatchAllUrls()
 ```
 
-`NuxtCatchAllUrls` is a proxy that will forward all requests to the Nuxt development server if the server is running or load the default `200.html` template. When in DEBUG mode, it will also serve the Nuxt static files with a proxy view.
+`NuxtCatchAllUrls` reverse-proxies unmatched requests to the Nuxt development server when it is running (HTML, `/_nuxt/` modules, fonts, DevTools, HMR). The browser only talks to Django (usually port 8000). Nuxt still listens on port 3000, but the `nuxt-django` module tells Vite that the public origin is Django. If the Nuxt server is not running, Django loads the generated `200.html` template.
 
-For development (settings.DEBUG = True), have the Nuxt development server running the same time with Django development server.
+For development (`settings.DEBUG = True`), run the Nuxt development server at the same time as Django. Open the app at `http://localhost:8000/` — do not use port 3000 in the browser.
+
+The Nuxt module defaults the public origin to `http://localhost:8000`. Override it with `nuxtDjango.devOrigin` or the `NUXT_DJANGO_DEV_ORIGIN` environment variable.
 
 For production, generate the Nuxt files with `nuxt generate` and then collect the static files with `python manage.py collectstatic`.
 
@@ -60,8 +61,8 @@ Remember, when serving the Nuxt static files (`_nuxt` folder) in production, you
 
 ### DJANGO_NUXT_SERVER_RUNNING
 
-The URL of the Nuxt development server. Default is `http://localhost:3000`.
-This value should be None in production.
+The URL of the Nuxt development server that Django reverse-proxies to. Default is `http://localhost:3000`.
+This value should be `None` or `False` in production.
 
 ### DJANGO_NUXT_GENERATED_FOLDER
 
@@ -101,3 +102,18 @@ The name of the template that will be used to render the Nuxt page. This should 
 If you really need to fine tune the NuxtStaticUrls helper, you can set the `DJANGO_NUXT_STATIC_URL` to the prefix that will be used to serve the Nuxt static files. Default is an empty string.
 
 Remember, you should not use NuxtStaticUrls in production!
+
+### Nuxt `devOrigin` / `NUXT_DJANGO_DEV_ORIGIN`
+
+Public origin the browser uses in development (the Django server). Default is `http://localhost:8000`. Set this on the Nuxt module when Django is not on port 8000:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['@jrutila/nuxt-django'],
+  nuxtDjango: {
+    devOrigin: 'http://localhost:8000',
+  },
+})
+```
+
+Or export `NUXT_DJANGO_DEV_ORIGIN=http://localhost:8000` when starting Nuxt.
