@@ -72,7 +72,7 @@ The folder where the Nuxt generated files are stored. Default is `ui/.output/pub
 
 The folder inside the DJANGO_NUXT_GENERATED_FOLDER folder that `NuxtStaticUrls` uses to serve the Nuxt `_nuxt` files. Default is `_nuxt/`.
 
-`NuxtStaticFilesFinder` does not use this setting. `collectstatic` copies every directory in `DJANGO_NUXT_GENERATED_FOLDER` into `STATIC_ROOT` under that directory's name (`_nuxt`, `_fonts`, and the rest). A directory named like the first segment of `STATIC_URL` (usually `static`) is copied without that name, so `static/_nuxt/app.js` is stored as `_nuxt/app.js` and `static/_fonts/Inter.woff2` is stored as `_fonts/Inter.woff2`. Files that sit directly in the generated folder, such as `200.html`, are not collected.
+`NuxtStaticFilesFinder` does not use this setting. `collectstatic` copies only the directory in `DJANGO_NUXT_GENERATED_FOLDER` named like the first segment of `STATIC_URL` (usually `static`), and it drops that name, so `static/_nuxt/app.js` is stored as `_nuxt/app.js` and `static/_fonts/Inter.woff2` is stored as `_fonts/Inter.woff2`. Other generated directories and files such as `200.html` are not collected. The Nuxt public folder is still collected as it is.
 
 #### Serving the nuxt files with WhiteNoise
 

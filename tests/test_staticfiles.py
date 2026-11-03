@@ -16,15 +16,17 @@ def _collected(finder):
 
 
 class TestNuxtStaticFilesFinder(TestCase):
-    def test_collects_every_generated_directory_and_skips_root_files(self):
+    def test_collects_only_the_static_url_directory_and_the_public_folder(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             generated = root / "public"
             nuxt_public = root / "ui-public"
-            (generated / "_nuxt").mkdir(parents=True)
-            (generated / "_nuxt" / "app.js").write_text("js", encoding="utf-8")
-            (generated / "_fonts").mkdir()
-            (generated / "_fonts" / "Inter.woff2").write_bytes(b"woff")
+            (generated / "static" / "_nuxt").mkdir(parents=True)
+            (generated / "static" / "_nuxt" / "app.js").write_text("js", encoding="utf-8")
+            (generated / "static" / "_fonts").mkdir()
+            (generated / "static" / "_fonts" / "Inter.woff2").write_bytes(b"woff")
+            (generated / "_nuxt").mkdir()
+            (generated / "_nuxt" / "skipped.js").write_text("js", encoding="utf-8")
             (generated / "images").mkdir()
             (generated / "images" / "logo.png").write_bytes(b"png")
             (generated / "200.html").write_text("<html></html>", encoding="utf-8")
@@ -32,6 +34,7 @@ class TestNuxtStaticFilesFinder(TestCase):
             (nuxt_public / "robots.txt").write_text("robots", encoding="utf-8")
 
             with override_settings(
+                STATIC_URL="static/",
                 DJANGO_NUXT_GENERATED_FOLDER=str(generated),
                 DJANGO_NUXT_PUBLIC_FOLDER=str(nuxt_public),
             ):
@@ -42,7 +45,6 @@ class TestNuxtStaticFilesFinder(TestCase):
             [
                 "_fonts/Inter.woff2",
                 "_nuxt/app.js",
-                "images/logo.png",
                 "robots.txt",
             ],
         )
