@@ -55,7 +55,7 @@ The Nuxt module defaults the Django page origin to `http://localhost:8000` (used
 
 For production, generate the Nuxt files with `nuxt generate` and then collect the static files with `python manage.py collectstatic`.
 
-Remember, when serving the Nuxt static files (`_nuxt` folder) in production, you might have to configure that independent from other Django static files as Nuxt tries to find the files under the `/_nuxt/` path, not `/static/_nuxt/`.
+In production the Nuxt module points the generated JS and CSS at `/static/_nuxt/` and the font files at `/static/_fonts/`. Set `nuxtDjango.staticUrl` to the same value as Django's `STATIC_URL` when that is not `static/`. Development still uses `/_nuxt/` and `/_fonts/`.
 
 ## Settings
 
@@ -72,11 +72,11 @@ The folder where the Nuxt generated files are stored. Default is `ui/.output/pub
 
 The folder inside the DJANGO_NUXT_GENERATED_FOLDER folder that `NuxtStaticUrls` uses to serve the Nuxt `_nuxt` files. Default is `_nuxt/`.
 
-`NuxtStaticFilesFinder` does not use this setting. `collectstatic` copies every directory in `DJANGO_NUXT_GENERATED_FOLDER` into `STATIC_ROOT` under that directory's name (`_nuxt`, `_fonts`, and the rest). Files that sit directly in the generated folder, such as `200.html`, are not collected. Nuxt still requests `/_nuxt/` files at `/_nuxt/`, not under `/static/`.
+`NuxtStaticFilesFinder` does not use this setting. `collectstatic` copies every directory in `DJANGO_NUXT_GENERATED_FOLDER` into `STATIC_ROOT` under that directory's name (`_nuxt`, `_fonts`, and the rest). A directory named like the first segment of `STATIC_URL` (usually `static`) is copied without that name, so `static/_nuxt/app.js` is stored as `_nuxt/app.js` and `static/_fonts/Inter.woff2` is stored as `_fonts/Inter.woff2`. Files that sit directly in the generated folder, such as `200.html`, are not collected.
 
 #### Serving the nuxt files with WhiteNoise
 
-WhiteNoise serves `STATIC_ROOT` under `STATIC_URL`. A generated `_nuxt` directory is collected as `_nuxt/` and served at `/static/_nuxt/` when `STATIC_URL` is `static/`. The browser still requests Nuxt's asset URL, which defaults to `/_nuxt/`.
+WhiteNoise serves `STATIC_ROOT` under `STATIC_URL`. Outside development, `nuxt-django` sets Nuxt's build assets directory to `/static/_nuxt/` and the font files to `/static/_fonts/`, unless the app already set them. When Django's `STATIC_URL` is different, set `nuxtDjango.staticUrl` to that same value (`assets/`, `/assets/`, or a CDN URL such as `https://cdn.example.com/static/`). Generated files then live under that path in the Nuxt output. `collectstatic` drops the leading directory named like the first segment of `STATIC_URL`, and WhiteNoise serves the files from `STATIC_URL`. Development keeps `/_nuxt/` and `/_fonts/`.
 
 ### DJANGO_NUXT_PUBLIC_FOLDER
 

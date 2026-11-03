@@ -34,6 +34,8 @@ export default defineNuxtConfig({
     baseURL: 'http://localhost:8000',
     // Public origin the browser uses in development (Django). Default: http://localhost:8000
     devOrigin: 'http://localhost:8000',
+    // Django STATIC_URL when it is not /static/. Also accepts static/ or a CDN URL.
+    staticUrl: '/static/',
   },
 })
 ```
